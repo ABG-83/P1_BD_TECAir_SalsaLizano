@@ -5,7 +5,10 @@ const AppNavbar = () => {
   return (
     <Navbar bg="white" variant="light" expand="lg" className="mb-5 py-3 shadow-sm">
       <Container>
-        <Navbar.Brand as={Link as any} to="/" className="text-dark fs-4">TECAir</Navbar.Brand>
+        <Navbar.Brand as={Link as any} to="/" className="fs-1 text-decoration-none">
+          <span style={{ color: '#004A99', fontWeight: 'bold' }}>TEC</span>
+          <span className="text-dark fw-light">Air</span>
+        </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" className="border-0" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto ms-4">
