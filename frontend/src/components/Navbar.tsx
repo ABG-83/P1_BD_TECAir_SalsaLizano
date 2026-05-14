@@ -10,6 +10,7 @@ const AppNavbar = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto ms-4">
             <Nav.Link as={Link as any} to="/" className="text-dark fw-medium mx-2">Búsqueda de Vuelos</Nav.Link>
+            <Nav.Link as={Link as any} to="/promociones" className="text-dark fw-medium mx-2">Promociones</Nav.Link>
             <Nav.Link as={Link as any} to="/checkin" className="text-dark fw-medium mx-2">Pre-Chequeo</Nav.Link>
           </Nav>
           <Nav>

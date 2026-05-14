@@ -1,4 +1,5 @@
 import { Container, Form, Button } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const LoginView = () => {
   const handleLogin = (e: React.FormEvent) => {
@@ -26,7 +27,7 @@ const LoginView = () => {
           </Button>
         </Form>
         <div className="text-center mt-4 pt-3 border-top">
-          <span className="text-muted">¿No tienes cuenta?</span> <a href="#" className="text-dark fw-bold text-decoration-none">Regístrate aquí</a>
+          <span className="text-muted">¿No tienes cuenta?</span> <Link to="/registro" className="text-dark fw-bold text-decoration-none">Regístrate aquí</Link>
         </div>
       </div>
     </Container>
