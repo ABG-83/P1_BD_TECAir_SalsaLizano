@@ -1,0 +1,20 @@
+[
+  {
+    "id": "FL-100",
+    "origin": "SJO",
+    "destination": "MIA",
+    "date": "2026-06-15",
+    "time": "08:00",
+    "price": 150.00,
+    "availableSeats": 120
+  },
+  {
+    "id": "FL-101",
+    "origin": "SJO",
+    "destination": "MAD",
+    "date": "2026-06-16",
+    "time": "14:30",
+    "price": 450.00,
+    "availableSeats": 85
+  }
+]
