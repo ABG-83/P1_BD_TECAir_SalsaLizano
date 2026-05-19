@@ -1,7 +1,7 @@
-----------------------------------------------------
+
 --  TECAir — Empty State (Creación de Base de Datos)
 --   Script de creación de estructura sin datos.
------------------------------------------------------
+
 
 -- Eliminar tablas si ya existen (en orden por dependencias FK)
 DROP TABLE IF EXISTS VUELO_ESCALA    CASCADE;
