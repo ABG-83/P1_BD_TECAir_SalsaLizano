@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="TECAir.API/TECAir.API.csproj" />
-  <Project Path="TECAir.Core/TECAir.Core.csproj" />
-  <Project Path="TECAir.Data/TECAir.Data.csproj" />
-  <Project Path="TECAir.Tests/TECAir.Tests.csproj" />
-</Solution>
