@@ -45,10 +45,16 @@ const AppRouter = () => {
         }
       >
         <Route index element={<AirportDashboard />} />
-        <Route path="vuelos" element={<FlightManagementView />} />
-        <Route path="usuarios" element={<UserManagementView />} />
         <Route path="checkin" element={<CheckInManagementView />} />
-        <Route path="promociones" element={<PromotionManagementView />} />
+        <Route path="vuelos" element={
+          <ProtectedRoute requiredRole="administrador"><FlightManagementView /></ProtectedRoute>
+        } />
+        <Route path="usuarios" element={
+          <ProtectedRoute requiredRole="administrador"><UserManagementView /></ProtectedRoute>
+        } />
+        <Route path="promociones" element={
+          <ProtectedRoute requiredRole="administrador"><PromotionManagementView /></ProtectedRoute>
+        } />
       </Route>
     </Routes>
   );

@@ -1,12 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-const NAV_ITEMS = [
-  { to: '/aeropuerto',            label: 'Dashboard',   icon: 'bi-grid'           },
-  { to: '/aeropuerto/vuelos',     label: 'Vuelos',      icon: 'bi-airplane'       },
-  { to: '/aeropuerto/usuarios',   label: 'Usuarios',    icon: 'bi-people'         },
-  { to: '/aeropuerto/checkin',    label: 'Check-in',    icon: 'bi-check2-square'  },
-  { to: '/aeropuerto/promociones',label: 'Promociones', icon: 'bi-tag'            },
+const ALL_NAV_ITEMS = [
+  { to: '/aeropuerto',             label: 'Dashboard',   icon: 'bi-grid',          adminOnly: false },
+  { to: '/aeropuerto/checkin',     label: 'Check-in',    icon: 'bi-check2-square', adminOnly: false },
+  { to: '/aeropuerto/vuelos',      label: 'Vuelos',      icon: 'bi-airplane',      adminOnly: true  },
+  { to: '/aeropuerto/usuarios',    label: 'Usuarios',    icon: 'bi-people',        adminOnly: true  },
+  { to: '/aeropuerto/promociones', label: 'Promociones', icon: 'bi-tag',           adminOnly: true  },
 ];
 
 const AirportLayout = () => {
@@ -33,7 +33,7 @@ const AirportLayout = () => {
         </div>
 
         <nav className="flex-grow-1">
-          {NAV_ITEMS.map(item => (
+          {ALL_NAV_ITEMS.filter(item => !item.adminOnly || user?.rol === 'administrador').map(item => (
             <NavLink
               key={item.to}
               to={item.to}
