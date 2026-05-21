@@ -18,6 +18,9 @@ builder.Services.AddSingleton<IDbConnectionFactory>(
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddScoped<IAirportRepository, AirportRepository>();
+builder.Services.AddScoped<IAirportService, AirportService>();
+
 // ── Controllers & JSON ────────────────────────────────────────────────────
 builder.Services.AddControllers();
 
