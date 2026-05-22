@@ -1,9 +1,5 @@
+using TECAir.API.Extensions;
 using TECAir.API.Middlewares;
-using TECAir.Core.Interfaces;
-using TECAir.Core.Services;
-using TECAir.Data.Connection;
-using TECAir.Data.Interfaces;
-using TECAir.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,14 +8,7 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
 
 // ── Dependency injection ───────────────────────────────────────────────────
-builder.Services.AddSingleton<IDbConnectionFactory>(
-    new DbConnectionFactory(connectionString));
-
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<IUserService, UserService>();
-
-builder.Services.AddScoped<IAirportRepository, AirportRepository>();
-builder.Services.AddScoped<IAirportService, AirportService>();
+builder.Services.AddTECAirCoreLayers(connectionString);
 
 // ── Controllers & JSON ────────────────────────────────────────────────────
 builder.Services.AddControllers();
