@@ -1,3 +1,15 @@
+// =============================================================================
+// Archivo  : FlightRepository.cs
+// Capa     : TECAir.Data → Repositories
+// Propósito: Implementación de IFlightRepository usando ADO.NET puro.
+//            Maneja las tablas VUELO (flights) y VUELO_ESCALA (flight_routes).
+//
+//            Flujo de registro de un vuelo nuevo:
+//              1. CreateAsync()   → INSERT en flights
+//              2. AddStopAsync()  → INSERT en flight_routes (una vez por escala)
+// =============================================================================
+
+
 using System.Data;
 using TECAir.Data.Connection;
 using TECAir.Data.Interfaces;
@@ -28,8 +40,133 @@ namespace TECAir.Data.Repositories
             DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id"))
         };
 
+
+        // Mapea una fila del DataReader a un objeto FlightRoute (escala)
+        private static FlightRoute MapStopRow(IDataReader r) => new()
+        {
+            FlightNumber = r.GetString(r.GetOrdinal("flight_number")),
+            AirportId    = r.GetInt32(r.GetOrdinal("airport_id")),
+            StopOrder    = r.GetInt32(r.GetOrdinal("stop_order"))
+        };
+ 
+        // Crea y agrega un parámetro al comando
+        private static void AddParam(IDbCommand cmd, string name, object value)
+        {
+            var p = cmd.CreateParameter();
+            p.ParameterName = name;
+            p.Value = value;
+            cmd.Parameters.Add(p);
+        }
+
         // ── Queries ────────────────────────────────────────────────────────────
 
+           public async Task<IEnumerable<Flight>> GetAllAsync()
+        {
+            const string sql = """
+                SELECT flight_number, departure_time, arrival_time, status,
+                       airplane_plate_number, origin_airport_id, destination_airport_id
+                FROM flights
+                ORDER BY departure_time ASC;
+                """;
+ 
+            var flights = new List<Flight>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+ 
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                flights.Add(MapRow(reader));
+ 
+            return flights;
+        }
+ 
+        public async Task<Flight?> GetByFlightNumberAsync(string flightNumber)
+        {
+            const string sql = """
+                SELECT flight_number, departure_time, arrival_time, status,
+                       airplane_plate_number, origin_airport_id, destination_airport_id
+                FROM flights
+                WHERE flight_number = @flightNumber;
+                """;
+ 
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            AddParam(command, "flightNumber", flightNumber);
+ 
+            using var reader = command.ExecuteReader();
+            return reader.Read() ? MapRow(reader) : null;
+        }
+ 
+        public async Task<IEnumerable<FlightRoute>> GetStopsByFlightNumberAsync(string flightNumber)
+        {
+            const string sql = """
+                SELECT flight_number, airport_id, stop_order
+                FROM flight_routes
+                WHERE flight_number = @flightNumber
+                ORDER BY stop_order ASC;
+                """;
+ 
+            var stops = new List<FlightRoute>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            AddParam(command, "flightNumber", flightNumber);
+ 
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                stops.Add(MapStopRow(reader));
+ 
+            return stops;
+        }
+ 
+        public async Task CreateAsync(Flight flight)
+        {
+            const string sql = """
+                INSERT INTO flights (
+                    flight_number, departure_time, arrival_time, status,
+                    airplane_plate_number, origin_airport_id, destination_airport_id
+                )
+                VALUES (
+                    @flightNumber, @departureTime, @arrivalTime, @status,
+                    @airplanePlateNumber, @originAirportId, @destinationAirportId
+                );
+                """;
+ 
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+ 
+            AddParam(command, "flightNumber",        flight.FlightNumber);
+            AddParam(command, "departureTime",       flight.DepartureTime);
+            AddParam(command, "arrivalTime",         flight.ArrivalTime);
+            AddParam(command, "status",              flight.Status.ToString());
+            AddParam(command, "airplanePlateNumber", flight.AirplanePlateNumber);
+            AddParam(command, "originAirportId",     flight.OriginAirportId);
+            AddParam(command, "destinationAirportId",flight.DestinationAirportId);
+ 
+            command.ExecuteNonQuery();
+        }
+ 
+        public async Task AddStopAsync(FlightRoute stop)
+        {
+            const string sql = """
+                INSERT INTO flight_routes (flight_number, airport_id, stop_order)
+                VALUES (@flightNumber, @airportId, @stopOrder);
+                """;
+ 
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+ 
+            AddParam(command, "flightNumber", stop.FlightNumber);
+            AddParam(command, "airportId",    stop.AirportId);
+            AddParam(command, "stopOrder",    stop.StopOrder);
+ 
+            command.ExecuteNonQuery();
+        }
+        // Búsqueda por ruta origen → destino. Retorna vuelos que tengan esa ruta, incluyendo los que tengan escalas intermedias. 
         /// <inheritdoc />
         public async Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId)
         {
