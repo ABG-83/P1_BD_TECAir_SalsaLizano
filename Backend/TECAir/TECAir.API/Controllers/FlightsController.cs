@@ -1,0 +1,96 @@
+// =============================================================================
+// Archivo  : FlightsController.cs
+// Capa     : TECAir.API → Controllers
+// Propósito: Endpoints REST del Issue #14 — API de gestión de vuelos.
+//            Recibe peticiones HTTP, delega al servicio y retorna la respuesta.
+//            No contiene lógica de negocio ni SQL.
+// =============================================================================
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using TECAir.Core.DTOs.Flights;
+using TECAir.Core.Interfaces;
+using TECAir.Data.Models;
+
+namespace TECAir.API.Controllers
+{
+    /// <summary>
+    /// Exposes API endpoints for searching and managing flight information.
+    /// </summary>
+    [ApiController]
+    [Route("api/[controller]")]
+    public class FlightsController(IFlightService flightService) : ControllerBase
+    {
+        private readonly IFlightService _flightService = flightService;
+
+        // GET /api/flights
+        // Retorna todos los vuelos con su ruta completa enriquecida
+        [HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<FlightResponseDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll()
+        {
+            var flights = await _flightService.GetAllFlightsAsync();
+            return Ok(flights);
+        }
+
+        /// <summary>
+        /// Searches available flights executing a specific route between two airports.
+        /// </summary>
+        /// <param name="originId">The identifier of the origin airport.</param>
+        /// <param name="destinationId">The identifier of the destination airport.</param>
+        /// <returns>A list of matching flights meeting the search criteria.</returns>
+        /// <response code="200">Returns the collection of flights matching the route filter.</response>
+        [HttpGet("search")]
+        [ProducesResponseType(typeof(IEnumerable<Flight>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> SearchByRoute([FromQuery] int originId, [FromQuery] int destinationId)
+        {
+            var flights = await _flightService.SearchFlightsByRouteAsync(originId, destinationId);
+            return Ok(flights);
+        }
+        // GET /api/flights/{number}
+        // Retorna un vuelo específico con su ruta y escalas. 404 si no existe.
+        [HttpGet("{number}")]
+        [ProducesResponseType(typeof(FlightResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByNumber(string number)
+        {
+            var flight = await _flightService.GetFlightByNumberAsync(number);
+ 
+            if (flight is null)
+                return NotFound(new { message = $"No se encontró el vuelo '{number}'." });
+ 
+            return Ok(flight);
+        }
+ 
+        // POST /api/flights
+        // Registra un nuevo vuelo con ruta completa.
+        // Body de ejemplo (vuelo con una escala):
+        // {
+        //   "flightNumber":        "TA-210",
+        //   "departureTime":       "2026-07-01T08:00:00",
+        //   "arrivalTime":         "2026-07-01T15:00:00",
+        //   "airplanePlateNumber": "TEC-001",
+        //   "originAirportId":     1,
+        //   "destinationAirportId":4,
+        //   "stopAirportIds":      [5]
+        // }
+        // Para vuelo directo: "stopAirportIds": []
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Create([FromBody] CreateFlightDto dto)
+        {
+            // [ApiController] valida los [Required] del DTO automáticamente antes de llegar aquí
+            await _flightService.CreateFlightAsync(dto);
+ 
+            // 201 Created apuntando al vuelo recién creado
+            return CreatedAtAction(
+                actionName: nameof(GetByNumber),
+                routeValues: new { number = dto.FlightNumber },
+                value: new { flightNumber = dto.FlightNumber }
+            );
+        }
+    }
+}
+

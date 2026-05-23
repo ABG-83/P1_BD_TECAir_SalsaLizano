@@ -1,0 +1,120 @@
+TECAir.sln
+│
+├── TECAir.API/
+│   ├── Controllers/
+│   │   ├── AuthController.cs
+│   │   ├── UsersController.cs
+│   │   ├── FlightsController.cs
+│   │   ├── ReservationsController.cs
+│   │   ├── CheckInController.cs
+│   │   ├── BaggageController.cs
+│   │   ├── PromotionsController.cs
+│   │   ├── BoardingPassController.cs
+│   │   └── SyncController.cs
+│   ├── Middlewares/
+│   │   ├── ExceptionMiddleware.cs
+│   │   └── AuthMiddleware.cs
+│   ├── Extensions/
+│   │   └── ServiceCollectionExtensions.cs
+│   ├── appsettings.json
+│   └── Program.cs
+│
+├── TECAir.Core/
+│   ├── DTOs/
+│   │   ├── Auth/
+│   │   │   ├── LoginDto.cs
+│   │   │   └── TokenResponseDto.cs
+│   │   ├── Users/
+│   │   │   ├── CreateUserDto.cs
+│   │   │   └── UserResponseDto.cs
+│   │   ├── Flights/
+│   │   │   ├── CreateFlightDto.cs
+│   │   │   ├── FlightResponseDto.cs
+│   │   │   └── FlightSearchDto.cs
+│   │   ├── Reservations/
+│   │   │   ├── CreateReservationDto.cs
+│   │   │   └── ReservationResponseDto.cs
+│   │   ├── CheckIn/
+│   │   │   ├── CheckInDto.cs
+│   │   │   └── CheckInResponseDto.cs
+│   │   ├── Baggage/
+│   │   │   ├── CreateBaggageDto.cs
+│   │   │   └── BaggageResponseDto.cs
+│   │   ├── Promotions/
+│   │   │   ├── CreatePromotionDto.cs
+│   │   │   └── PromotionResponseDto.cs
+│   │   ├── BoardingPass/
+│   │   │   └── BoardingPassDto.cs
+│   │   └── Sync/
+│   │       ├── SyncPullResponseDto.cs
+│   │       └── SyncPushDto.cs
+│   ├── Interfaces/
+│   │   ├── IAuthService.cs
+│   │   ├── IUserService.cs
+│   │   ├── IFlightService.cs
+│   │   ├── IReservationService.cs
+│   │   ├── ICheckInService.cs
+│   │   ├── IBaggageService.cs
+│   │   ├── IPromotionService.cs
+│   │   ├── IBoardingPassService.cs
+│   │   └── ISyncService.cs
+│   └── Services/
+│       ├── AuthService.cs
+│       ├── UserService.cs
+│       ├── FlightService.cs
+│       ├── ReservationService.cs
+│       ├── CheckInService.cs
+│       ├── BaggageService.cs
+│       ├── PromotionService.cs
+│       ├── BoardingPassService.cs
+│       └── SyncService.cs
+│
+├── TECAir.Data/
+│   ├── Models/
+│   │   ├── User.cs
+│   │   ├── Student.cs
+│   │   ├── Flight.cs
+│   │   ├── FlightRoute.cs
+│   │   ├── Airport.cs
+│   │   ├── Airplane.cs
+│   │   ├── Reservation.cs
+│   │   ├── CheckIn.cs
+│   │   ├── Baggage.cs
+│   │   ├── Seat.cs
+│   │   └── Promotion.cs
+│   ├── Interfaces/
+│   │   ├── IUserRepository.cs
+│   │   ├── IFlightRepository.cs
+│   │   ├── IAirportRepository.cs
+│   │   ├── IAirplaneRepository.cs
+│   │   ├── IReservationRepository.cs
+│   │   ├── ICheckInRepository.cs
+│   │   ├── IBaggageRepository.cs
+│   │   ├── IPromotionRepository.cs
+│   │   └── ISyncRepository.cs
+│   ├── Repositories/
+│   │   ├── UserRepository.cs
+│   │   ├── FlightRepository.cs
+│   │   ├── AirportRepository.cs
+│   │   ├── AirplaneRepository.cs
+│   │   ├── ReservationRepository.cs
+│   │   ├── CheckInRepository.cs
+│   │   ├── BaggageRepository.cs
+│   │   ├── PromotionRepository.cs
+│   │   └── SyncRepository.cs
+│   ├── Connection/
+│   │   └── DbConnectionFactory.cs
+│   └── Scripts/
+│       ├── EmptyState.sql
+│       └── InitialState.sql
+│
+└── TECAir.Tests/
+    ├── Services/
+    │   ├── BaggageServiceTests.cs
+    │   ├── FlightServiceTests.cs
+    │   ├── ReservationServiceTests.cs
+    │   ├── CheckInServiceTests.cs
+    │   └── SyncServiceTests.cs
+    └── Repositories/
+        ├── UserRepositoryTests.cs
+        └── FlightRepositoryTests.cs
