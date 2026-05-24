@@ -38,5 +38,7 @@ namespace TECAir.Data.Interfaces
         Task AddStopAsync(FlightRoute stop);
         // Busqueda por ruta origen → destino. Retorna vuelos que tengan esa ruta, incluyendo los que tengan escalas intermedias.
         Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId);
+        // Actualiza el estado operacional de un vuelo (Issue #29 — apertura/cierre de vuelos)
+        Task UpdateStatusAsync(string flightNumber, FlightStatus newStatus); 
     }
 }
