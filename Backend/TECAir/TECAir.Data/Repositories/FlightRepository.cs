@@ -166,6 +166,25 @@ namespace TECAir.Data.Repositories
  
             command.ExecuteNonQuery();
         }
+
+        // Actualiza solo la columna 'status' del vuelo identificado por su número
+        public async Task UpdateStatusAsync(string flightNumber, FlightStatus status)
+        {
+            const string sql = """
+                UPDATE flights
+                SET status = @status
+                WHERE flight_number = @flightNumber;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            AddParam(command, "status",       status.ToString());
+            AddParam(command, "flightNumber", flightNumber);
+
+            command.ExecuteNonQuery();
+        }   
         // Búsqueda por ruta origen → destino. Retorna vuelos que tengan esa ruta, incluyendo los que tengan escalas intermedias. 
         /// <inheritdoc />
         public async Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId)
