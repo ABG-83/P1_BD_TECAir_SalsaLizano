@@ -39,6 +39,7 @@ namespace TECAir.API.Extensions
             services.AddScoped<IReservationRepository, ReservationRepository>();  // Issue #29
             services.AddScoped<IBaggageRepository, BaggageRepository>();          // Issue #29
             services.AddScoped<ICheckInRepository, CheckInRepository>();          // Issue #15
+            services.AddScoped<IBaggageRepository, BaggageRepository>();          // 
 
 
             // ── Business Logic Layer / Services ────────────────────────────────
@@ -48,8 +49,7 @@ namespace TECAir.API.Extensions
             services.AddScoped<IPromotionService, PromotionService>(); // Issue #13
              services.AddScoped<IFlightOpeningService, FlightOpeningService>();     // Issue #29
              services.AddScoped<ICheckInService, CheckInService>();                 // Issue #15
-          
-
+              services.AddScoped<IBaggageService, BaggageService>();          // Issue #16
             return services;
         }
     }
