@@ -81,6 +81,7 @@ namespace TECAir.API.Middlewares
                 "users_phone_number_key" => "Phone number already registered.",
                 "users_college_id_number_key" => "College ID already registered.",
                 "reservations_pkey" => "This reservation code locator is already registered inside the system.",
+                "payments_transaction_reference_key" => "This financial transaction reference index has already been settled and processed.",
                 _ => "A unique field is already in use."
             };
     }

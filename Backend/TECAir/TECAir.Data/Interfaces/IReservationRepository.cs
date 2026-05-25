@@ -35,5 +35,12 @@ namespace TECAir.Data.Interfaces
         // Retorna solo las reservaciones con payment_status = 'paid' de un vuelo
         // Es el método central para la apertura de vuelos (pasajeros confirmados)
         Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber);
+
+        /// <summary>
+        /// Queries the transactional ledger storage to count all active, non-cancelled bookings assigned to a specific flight identifier.
+        /// </summary>
+        /// <param name="flightNumber">The alphanumeric unique locator code of the target aircraft journey.</param>
+        /// <returns>The total amount of currently occupied seats for the manifest evaluation.</returns>
+        Task<int> GetActiveCountByFlightNumberAsync(string flightNumber);
     }
 }

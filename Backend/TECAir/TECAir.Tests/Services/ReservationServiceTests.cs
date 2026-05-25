@@ -37,12 +37,14 @@ namespace TECAir.Tests.Services
             // Arrange
             var dto = SampleCreateDto();
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
 
             // Set up repository to mimic returning the saved reservation code locator
+            mockFlightRepo.Setup(f => f.GetCapacityByFlightNumberAsync(dto.FlightNumber)).ReturnsAsync(150);
             mockRepo.Setup(r => r.CreateAsync(It.IsAny<Reservation>()))
                     .ReturnsAsync("TEC-GEN99");
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = await service.CreateReservationAsync(dto);
@@ -60,16 +62,38 @@ namespace TECAir.Tests.Services
         public async Task CreateReservationAsync_EmptyFlightNumber_ThrowsArgumentException()
         {
             // Arrange
-            // Ensure the input payload explicitly hits the whitespace validation gate
             var dto = new CreateReservationDto { UserId = 1, FlightNumber = "" };
             var mockRepo = new Mock<IReservationRepository>();
-            var service = new ReservationService(mockRepo.Object);
+            var mockFlightRepo = new Mock<IFlightRepository>();
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act & Assert
             var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
                 service.CreateReservationAsync(dto));
 
             Assert.Contains("required", exception.Message.ToLower());
+        }
+
+        [Fact]
+        public async Task CreateReservationAsync_FlightFullyBooked_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var dto = SampleCreateDto();
+            var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
+            // Simulate aircraft is at max capacity (e.g., 60 seats capacity and 60 active bookings)
+            mockFlightRepo.Setup(f => f.GetCapacityByFlightNumberAsync(dto.FlightNumber)).ReturnsAsync(60);
+            mockRepo.Setup(r => r.GetActiveCountByFlightNumberAsync(dto.FlightNumber)).ReturnsAsync(60);
+
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.CreateReservationAsync(dto));
+
+            Assert.Contains("fully booked", exception.Message.ToLower());
+            mockRepo.Verify(r => r.CreateAsync(It.IsAny<Reservation>()), Times.Never); // Safety assertion
         }
 
         // ── GetReservationByCodeAsync ──────────────────────────────────────────
@@ -80,10 +104,12 @@ namespace TECAir.Tests.Services
             // Arrange
             var reservation = SampleReservation();
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync(reservation.ReservationCode))
                     .ReturnsAsync(reservation);
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = await service.GetReservationByCodeAsync(reservation.ReservationCode);
@@ -99,10 +125,12 @@ namespace TECAir.Tests.Services
         {
             // Arrange
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync("INVALID"))
                     .ReturnsAsync((Reservation?)null);
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = await service.GetReservationByCodeAsync("INVALID");
@@ -120,10 +148,12 @@ namespace TECAir.Tests.Services
             int targetUserId = 1;
             var items = new List<Reservation> { SampleReservation() };
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByUserIdAsync(targetUserId))
                     .ReturnsAsync(items);
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = (await service.GetReservationsByUserIdAsync(targetUserId)).ToList();
@@ -144,11 +174,19 @@ namespace TECAir.Tests.Services
             var dto = SampleCreateDto();
             var reservation = SampleReservation();
 
+            // NUEVO: Crear un perfil de vuelo válido para pasar la compuerta de estado
+            var activeFlight = new Flight { FlightNumber = "TA-101", Status = FlightStatus.Scheduled };
+
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync(targetCode)).ReturnsAsync(reservation);
             mockRepo.Setup(r => r.UpdateAsync(It.IsAny<Reservation>())).ReturnsAsync(true);
 
-            var service = new ReservationService(mockRepo.Object);
+            // NUEVO: Configurar el Mock para que no devuelva null
+            mockFlightRepo.Setup(f => f.GetByFlightNumberAsync(reservation.FlightNumber)).ReturnsAsync(activeFlight);
+
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = await service.ModifyReservationAsync(targetCode, dto);
@@ -164,13 +202,42 @@ namespace TECAir.Tests.Services
             // Arrange
             var dto = SampleCreateDto();
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync("NOTFOUND")).ReturnsAsync((Reservation?)null);
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
-            // Act & Assert (Intercepted by ExceptionMiddleware as 404 NotFound)
+            // Act & Assert
             await Assert.ThrowsAsync<KeyNotFoundException>(() =>
                 service.ModifyReservationAsync("NOTFOUND", dto));
+        }
+
+        [Fact]
+        public async Task ModifyReservationAsync_FlightIsClosed_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            string targetCode = "TEC-ABC12";
+            var dto = SampleCreateDto();
+            var reservation = SampleReservation();
+
+            // Setting up a frozen flight state configuration profile constraint
+            var closedFlight = new Flight { FlightNumber = "TA-101", Status = FlightStatus.Cancelled };
+
+            var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
+            mockRepo.Setup(r => r.GetByCodeAsync(targetCode)).ReturnsAsync(reservation);
+            mockFlightRepo.Setup(f => f.GetByFlightNumberAsync(reservation.FlightNumber)).ReturnsAsync(closedFlight);
+
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.ModifyReservationAsync(targetCode, dto));
+
+            Assert.Contains("operational phase", exception.Message.ToLower());
+            mockRepo.Verify(r => r.UpdateAsync(It.IsAny<Reservation>()), Times.Never); // Ensures database was never modified
         }
 
         // ── CancelReservationAsync ─────────────────────────────────────────────
@@ -181,13 +248,21 @@ namespace TECAir.Tests.Services
             // Arrange
             string targetCode = "TEC-ABC12";
             var reservation = SampleReservation();
-            reservation.PaymentState = PaymentStatus.Pending; // Active valid booking state
+            reservation.PaymentState = PaymentStatus.Pending;
+
+            // NUEVO: El vuelo debe estar en Scheduled para que se permita la cancelación
+            var activeFlight = new Flight { FlightNumber = "TA-101", Status = FlightStatus.Scheduled };
 
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync(targetCode)).ReturnsAsync(reservation);
             mockRepo.Setup(r => r.CancelAsync(targetCode)).ReturnsAsync(true);
 
-            var service = new ReservationService(mockRepo.Object);
+            // NUEVO: Alimentar la validación con el mock del vuelo
+            mockFlightRepo.Setup(f => f.GetByFlightNumberAsync(reservation.FlightNumber)).ReturnsAsync(activeFlight);
+
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act
             var result = await service.CancelReservationAsync(targetCode);
@@ -206,16 +281,44 @@ namespace TECAir.Tests.Services
             reservation.PaymentState = PaymentStatus.Refunded;
 
             var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
             mockRepo.Setup(r => r.GetByCodeAsync(targetCode)).ReturnsAsync(reservation);
 
-            var service = new ReservationService(mockRepo.Object);
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
 
             // Act & Assert 
             var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
                 service.CancelReservationAsync(targetCode));
 
-            // Fixed substring requirement to align with actual ExceptionMiddleware payload string
-            Assert.Contains("already void", exception.Message.ToLower());
+            Assert.Contains("historically refunded", exception.Message.ToLower());
+        }
+
+        [Fact]
+        public async Task CancelReservationAsync_FlightIsBoarding_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            string targetCode = "TEC-ABC12";
+            var reservation = SampleReservation();
+            reservation.PaymentState = PaymentStatus.Pending;
+
+            // Setting up a locked boarding tracking gate state rule
+            var boardingFlight = new Flight { FlightNumber = "TA-101", Status = FlightStatus.Boarding };
+
+            var mockRepo = new Mock<IReservationRepository>();
+            var mockFlightRepo = new Mock<IFlightRepository>();
+
+            mockRepo.Setup(r => r.GetByCodeAsync(targetCode)).ReturnsAsync(reservation);
+            mockFlightRepo.Setup(f => f.GetByFlightNumberAsync(reservation.FlightNumber)).ReturnsAsync(boardingFlight);
+
+            var service = new ReservationService(mockRepo.Object, mockFlightRepo.Object);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                service.CancelReservationAsync(targetCode));
+
+            Assert.Contains("locked due to active security", exception.Message.ToLower());
+            mockRepo.Verify(r => r.CancelAsync(It.IsAny<string>()), Times.Never); // Ensures database was never altered
         }
     }
 }

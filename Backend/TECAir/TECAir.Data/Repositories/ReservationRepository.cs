@@ -171,5 +171,35 @@ namespace TECAir.Data.Repositories
 
             return reservations;
         }
+
+        /// <inheritdoc />
+        public async Task<int> GetActiveCountByFlightNumberAsync(string flightNumber)
+        {
+            // Count rows tracking active inventory spaces, filtering out refunded blocks 
+            // so those seats become instantly vacant and available for sale again.
+            const string sql = @"
+                SELECT COUNT(*) 
+                FROM reservations 
+                WHERE flight_number = @FlightNumber 
+                  AND payment_state <> @RefundedStatus;";
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            // Parameterized bindings matching the real enum mapping rules
+            var flightParam = command.CreateParameter();
+            flightParam.ParameterName = "@FlightNumber";
+            flightParam.Value = flightNumber ?? (object)DBNull.Value;
+            command.Parameters.Add(flightParam);
+
+            var statusParam = command.CreateParameter();
+            statusParam.ParameterName = "@RefundedStatus";
+            statusParam.Value = PaymentStatus.Refunded.ToString(); // Or integer if stored as int in DB
+            command.Parameters.Add(statusParam);
+
+            var result = command.ExecuteScalar();
+            return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
+        }
     }
 }
