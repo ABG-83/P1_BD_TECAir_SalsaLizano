@@ -29,7 +29,7 @@ namespace TECAir.Data.Interfaces
         // Busca el check-in asociado a una reservación específica.
         // Retorna null si el pasajero aún no ha hecho check-in.
         // Se usa para detectar check-ins duplicados antes de crear uno nuevo.
-        Task<CheckIn?> GetByReservationIdAsync(int reservationId);
+        Task<CheckIn?> GetByReservationCodeAsync(string reservationCode);
 
         // Retorna todos los check-ins registrados para un vuelo.
         // Útil para listar los pasajeros ya chequeados en un vuelo.

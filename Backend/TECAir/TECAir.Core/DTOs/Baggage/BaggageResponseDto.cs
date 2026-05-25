@@ -14,10 +14,10 @@ namespace TECAir.Core.DTOs.Baggage
     public class BaggageResponseDto
     {
         // Identificador único generado por la BD
-        public int     BaggageId     { get; set; }
-        public decimal Weight        { get; set; }
-        public string  Color         { get; set; } = string.Empty;
-        public int     ReservationId { get; set; }
+        public int BaggageId { get; set; }
+        public decimal Weight { get; set; }
+        public string Color { get; set; } = string.Empty;
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Nombre completo del pasajero dueño (resuelto desde reservación → usuario)
         public string PassengerName { get; set; } = string.Empty;

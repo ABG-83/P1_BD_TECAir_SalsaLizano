@@ -26,7 +26,7 @@ namespace TECAir.Data.Models
         public DateTime PrintTime { get; set; }
 
         // Llave foránea a la reservación (UNIQUE: una sola por reservación)
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Llave foránea al vuelo al que pertenece este check-in
         public string FlightNumber { get; set; } = string.Empty;

@@ -27,12 +27,12 @@ namespace TECAir.Data.Repositories
         // Convierte una fila del DataReader en un objeto CheckIn
         private static CheckIn MapRow(IDataReader r) => new()
         {
-            CheckInId     = r.GetInt32(r.GetOrdinal("checkin_id")),
-            Seat          = r.GetString(r.GetOrdinal("seat")),
-            BoardingGate  = r.GetString(r.GetOrdinal("boarding_gate")),
-            PrintTime     = r.GetDateTime(r.GetOrdinal("print_time")),
-            ReservationId = r.GetInt32(r.GetOrdinal("reservation_id")),
-            FlightNumber  = r.GetString(r.GetOrdinal("flight_number"))
+            CheckInId = r.GetInt32(r.GetOrdinal("checkin_id")),
+            Seat = r.GetString(r.GetOrdinal("seat")),
+            BoardingGate = r.GetString(r.GetOrdinal("boarding_gate")),
+            PrintTime = r.GetDateTime(r.GetOrdinal("print_time")),
+            ReservationCode = r.GetString(r.GetOrdinal("reservation_code")),
+            FlightNumber = r.GetString(r.GetOrdinal("flight_number"))
         };
 
         // Crea y agrega un parámetro con nombre y valor al comando SQL
@@ -50,8 +50,8 @@ namespace TECAir.Data.Repositories
         public async Task<int> CreateAsync(CheckIn checkIn)
         {
             const string sql = """
-                INSERT INTO check_ins (seat, boarding_gate, print_time, reservation_id, flight_number)
-                VALUES (@seat, @boardingGate, @printTime, @reservationId, @flightNumber)
+                INSERT INTO check_ins (seat, boarding_gate, print_time, reservation_code, flight_number)
+                VALUES (@seat, @boardingGate, @printTime, @reservationCode, @flightNumber)
                 RETURNING checkin_id;
                 """;
 
@@ -60,11 +60,11 @@ namespace TECAir.Data.Repositories
             command.CommandText = sql;
 
             // Parámetros del INSERT — se mapean directamente desde el modelo
-            AddParam(command, "seat",          checkIn.Seat);
-            AddParam(command, "boardingGate",  checkIn.BoardingGate);
-            AddParam(command, "printTime",     checkIn.PrintTime);
-            AddParam(command, "reservationId", checkIn.ReservationId);
-            AddParam(command, "flightNumber",  checkIn.FlightNumber);
+            AddParam(command, "seat", checkIn.Seat);
+            AddParam(command, "boardingGate", checkIn.BoardingGate);
+            AddParam(command, "printTime", checkIn.PrintTime);
+            AddParam(command, "reservationCode", checkIn.ReservationCode);
+            AddParam(command, "flightNumber", checkIn.FlightNumber);
 
             // RETURNING checkin_id devuelve el ID recién generado sin hacer un SELECT adicional
             var result = command.ExecuteScalar();
@@ -77,7 +77,7 @@ namespace TECAir.Data.Repositories
         public async Task<CheckIn?> GetByIdAsync(int checkInId)
         {
             const string sql = """
-                SELECT checkin_id, seat, boarding_gate, print_time, reservation_id, flight_number
+                SELECT checkin_id, seat, boarding_gate, print_time, reservation_code, flight_number
                 FROM check_ins
                 WHERE checkin_id = @checkInId;
                 """;
@@ -93,18 +93,18 @@ namespace TECAir.Data.Repositories
 
         // Busca el check-in de una reservación específica.
         // Retorna null si el pasajero todavía no ha hecho check-in.
-        public async Task<CheckIn?> GetByReservationIdAsync(int reservationId)
+        public async Task<CheckIn?> GetByReservationCodeAsync(string reservationCode)
         {
             const string sql = """
-                SELECT checkin_id, seat, boarding_gate, print_time, reservation_id, flight_number
+                SELECT checkin_id, seat, boarding_gate, print_time, reservation_code, flight_number
                 FROM check_ins
-                WHERE reservation_id = @reservationId;
+                WHERE reservation_code = @reservationCode;
                 """;
 
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
-            AddParam(command, "reservationId", reservationId);
+            AddParam(command, "reservationCode", reservationCode);
 
             using var reader = command.ExecuteReader();
             return reader.Read() ? MapRow(reader) : null;
@@ -114,7 +114,7 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<CheckIn>> GetByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
-                SELECT checkin_id, seat, boarding_gate, print_time, reservation_id, flight_number
+                SELECT checkin_id, seat, boarding_gate, print_time, reservation_code, flight_number
                 FROM check_ins
                 WHERE flight_number = @flightNumber
                 ORDER BY print_time ASC;
@@ -148,7 +148,7 @@ namespace TECAir.Data.Repositories
             using var command = connection.CreateCommand();
             command.CommandText = sql;
             AddParam(command, "flightNumber", flightNumber);
-            AddParam(command, "seat",         seat);
+            AddParam(command, "seat", seat);
 
             // ExecuteScalar retorna el COUNT; si es mayor a 0 el asiento está ocupado
             var count = Convert.ToInt32(command.ExecuteScalar());

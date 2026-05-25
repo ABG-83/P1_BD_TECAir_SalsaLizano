@@ -24,7 +24,7 @@ namespace TECAir.Core.DTOs.CheckIn
         public DateTime PrintTime { get; set; }
 
         // ID de la reservación a la que pertenece este check-in
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Número de vuelo al que aplica el check-in
         public string FlightNumber { get; set; } = string.Empty;

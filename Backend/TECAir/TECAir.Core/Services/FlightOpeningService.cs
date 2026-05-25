@@ -23,10 +23,10 @@ namespace TECAir.Core.Services
         IBaggageRepository baggageRepository,
         IUserRepository userRepository) : IFlightOpeningService
     {
-        private readonly IFlightRepository      _flightRepository      = flightRepository;
+        private readonly IFlightRepository _flightRepository = flightRepository;
         private readonly IReservationRepository _reservationRepository = reservationRepository;
-        private readonly IBaggageRepository     _baggageRepository     = baggageRepository;
-        private readonly IUserRepository        _userRepository        = userRepository;
+        private readonly IBaggageRepository _baggageRepository = baggageRepository;
+        private readonly IUserRepository _userRepository = userRepository;
 
         // ── Apertura ───────────────────────────────────────────────────────────
 
@@ -77,27 +77,27 @@ namespace TECAir.Core.Services
                 var user = await _userRepository.GetByIdAsync(reservation.UserId);
 
                 // Contar las maletas registradas para esta reservación
-                var baggageCount = await _baggageRepository.CountByReservationIdAsync(reservation.ReservationId);
+                var baggageCount = await _baggageRepository.CountByReservationCodeAsync(reservation.ReservationCode);
 
                 passengers.Add(new PassengerManifestItemDto
                 {
-                    ReservationId   = reservation.ReservationId,
-                    FullName        = user?.FullName ?? "Desconocido",
-                    Email           = user?.Email   ?? "Sin correo",
-                    BaggageCount    = baggageCount,
+                    ReservationCode = reservation.ReservationCode,
+                    FullName = user?.FullName ?? "Desconocido",
+                    Email = user?.Email ?? "Sin correo",
+                    BaggageCount = baggageCount,
                     BaggageSurcharge = CalcularCargoPorMaletas(baggageCount)
                 });
             }
 
             return new FlightManifestDto
             {
-                FlightNumber    = flight.FlightNumber,
-                Status          = flight.Status.ToString(),
-                DepartureTime   = flight.DepartureTime,
-                ArrivalTime     = flight.ArrivalTime,
+                FlightNumber = flight.FlightNumber,
+                Status = flight.Status.ToString(),
+                DepartureTime = flight.DepartureTime,
+                ArrivalTime = flight.ArrivalTime,
                 TotalPassengers = passengers.Count,
-                TotalBaggages   = passengers.Sum(p => p.BaggageCount),
-                Passengers      = passengers
+                TotalBaggages = passengers.Sum(p => p.BaggageCount),
+                Passengers = passengers
             };
         }
 

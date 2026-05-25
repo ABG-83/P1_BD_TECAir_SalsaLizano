@@ -25,7 +25,7 @@ namespace TECAir.Data.Models
         public string Color { get; set; } = string.Empty;
 
         // Llave foránea a la reservación del pasajero dueño de la maleta
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Llave foránea al usuario dueño de la maleta
         public int UserId { get; set; }

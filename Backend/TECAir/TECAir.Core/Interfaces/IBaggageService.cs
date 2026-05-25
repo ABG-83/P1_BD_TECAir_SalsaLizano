@@ -14,7 +14,7 @@ namespace TECAir.Core.Interfaces
         Task<BaggageResponseDto> AddBaggageAsync(BaggageDto dTO);
 
         // Retorna todas las maletas de una reservación con su desglose de cobros
-        Task<IEnumerable<BaggageResponseDto>> GetByReservationIdAsync(int reservationId);
+        Task<IEnumerable<BaggageResponseDto>> GetByReservationCodeAsync(string reservationCode);
 
         // Busca una maleta específica por su ID; retorna null si no existe
         Task<BaggageResponseDto?> GetByIdAsync(int baggageId);

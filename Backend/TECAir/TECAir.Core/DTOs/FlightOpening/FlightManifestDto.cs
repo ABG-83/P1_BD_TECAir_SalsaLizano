@@ -37,7 +37,7 @@ namespace TECAir.Core.DTOs.FlightOpening
     public class PassengerManifestItemDto
     {
         // ID de la reservación del pasajero
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Nombre completo del pasajero
         public string FullName { get; set; } = string.Empty;

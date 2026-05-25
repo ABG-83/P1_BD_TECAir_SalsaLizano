@@ -13,16 +13,16 @@ namespace TECAir.Data.Interfaces
     // Contrato que deben cumplir todas las implementaciones del repositorio de maletas
     public interface IBaggageRepository
     {
-         // Inserta la maleta y retorna el baggage_id asignado por PostgreSQL
+        // Inserta la maleta y retorna el baggage_id asignado por PostgreSQL
         Task<int> CreateAsync(Baggage baggage);
 
         // Retorna todas las maletas asociadas a una reservación específica
-        Task<IEnumerable<Baggage>> GetByReservationIdAsync(int reservationId);
-         // Busca una maleta por su ID; retorna null si no existe
+        Task<IEnumerable<Baggage>> GetByReservationCodeAsync(string reservationCode);
+        // Busca una maleta por su ID; retorna null si no existe
         Task<Baggage?> GetByIdAsync(int baggageId);
 
         // Retorna el conteo total de maletas de una reservación
         // Usado en el manifiesto de apertura para mostrar la cantidad por pasajero
-        Task<int> CountByReservationIdAsync(int reservationId);
+        Task<int> CountByReservationCodeAsync(string reservationCode);
     }
 }

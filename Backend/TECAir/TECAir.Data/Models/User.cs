@@ -31,11 +31,11 @@ namespace TECAir.Data.Models
         /// <summary>
         /// Institutional student or staff identification number issued by the university.
         /// </summary>
-        public string CollegeIdNumber { get; set; } = string.Empty;
+        public string? CollegeIdNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Institutional/university affiliation.
         /// </summary>
-        public string College { get; set; } = string.Empty;
+        public string? College { get; set; } = string.Empty;
     }
 }

@@ -22,17 +22,17 @@ using TECAir.Data.Models;
 namespace TECAir.Core.Services
 {
     public class CheckInService(
-        ICheckInRepository     checkInRepository,
+        ICheckInRepository checkInRepository,
         IReservationRepository reservationRepository,
-        IFlightRepository      flightRepository,
-        IUserRepository        userRepository,
-        IAirportRepository     airportRepository) : ICheckInService
+        IFlightRepository flightRepository,
+        IUserRepository userRepository,
+        IAirportRepository airportRepository) : ICheckInService
     {
-        private readonly ICheckInRepository     _checkInRepository     = checkInRepository;
+        private readonly ICheckInRepository _checkInRepository = checkInRepository;
         private readonly IReservationRepository _reservationRepository = reservationRepository;
-        private readonly IFlightRepository      _flightRepository      = flightRepository;
-        private readonly IUserRepository        _userRepository        = userRepository;
-        private readonly IAirportRepository     _airportRepository     = airportRepository;
+        private readonly IFlightRepository _flightRepository = flightRepository;
+        private readonly IUserRepository _userRepository = userRepository;
+        private readonly IAirportRepository _airportRepository = airportRepository;
 
         // ── Check-in ───────────────────────────────────────────────────────────
 
@@ -40,15 +40,15 @@ namespace TECAir.Core.Services
         public async Task<CheckInResponseDto> CheckInPassengerAsync(CheckInDto dto)
         {
             // Verificar que la reservación exista
-            var reservation = await _reservationRepository.GetByIdAsync(dto.ReservationId)
+            var reservation = await _reservationRepository.GetByCodeAsync(dto.ReservationCode)
                 ?? throw new KeyNotFoundException(
-                    $"No existe una reservación con ID {dto.ReservationId}.");
+                    $"No existe una reservación con ID {dto.ReservationCode}.");
 
             // Solo se puede hacer check-in si la reservación fue pagada
-            if (reservation.PaymentStatus != "paid")
+            if (reservation.PaymentState != PaymentStatus.Paid)
                 throw new InvalidOperationException(
-                    $"La reservación {dto.ReservationId} no puede hacer check-in porque " +
-                    $"su estado de pago es '{reservation.PaymentStatus}'. " +
+                    $"La reservación {dto.ReservationCode} no puede hacer check-in porque " +
+                    $"su estado de pago es '{reservation.PaymentState}'. " +
                     "Solo las reservaciones 'paid' pueden proceder.");
 
             // Verificar que el vuelo exista
@@ -63,10 +63,10 @@ namespace TECAir.Core.Services
                     $"Estado actual: '{flight.Status}'. Solo se puede hacer check-in en vuelos 'Boarding'.");
 
             // Detectar si el pasajero ya realizó check-in para esta reservación
-            var existingCheckIn = await _checkInRepository.GetByReservationIdAsync(dto.ReservationId);
+            var existingCheckIn = await _checkInRepository.GetByReservationCodeAsync(dto.ReservationCode);
             if (existingCheckIn is not null)
                 throw new InvalidOperationException(
-                    $"La reservación {dto.ReservationId} ya tiene check-in registrado " +
+                    $"La reservación {dto.ReservationCode} ya tiene check-in registrado " +
                     $"(ID: {existingCheckIn.CheckInId}, Asiento: {existingCheckIn.Seat}).");
 
             // Normalizar el asiento a mayúsculas para evitar duplicados por diferencia de case
@@ -82,11 +82,11 @@ namespace TECAir.Core.Services
             // Construir el objeto de check-in con todos los datos validados
             var checkIn = new CheckIn
             {
-                Seat          = seatNormalized,
-                BoardingGate  = dto.BoardingGate.Trim().ToUpperInvariant(),
-                PrintTime     = DateTime.UtcNow,
-                ReservationId = reservation.ReservationId,
-                FlightNumber  = flight.FlightNumber
+                Seat = seatNormalized,
+                BoardingGate = dto.BoardingGate.Trim().ToUpperInvariant(),
+                PrintTime = DateTime.UtcNow,
+                ReservationCode = reservation.ReservationCode,
+                FlightNumber = flight.FlightNumber
             };
 
             // Persistir el check-in en la BD y obtener el ID asignado
@@ -109,8 +109,8 @@ namespace TECAir.Core.Services
             if (checkIn is null) return null;
 
             // Resolver el nombre del pasajero a través de la cadena: checkIn → reservation → user
-            var reservation = await _reservationRepository.GetByIdAsync(checkIn.ReservationId);
-            var user        = reservation is not null
+            var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
+            var user = reservation is not null
                               ? await _userRepository.GetByIdAsync(reservation.UserId)
                               : null;
 
@@ -125,11 +125,11 @@ namespace TECAir.Core.Services
             if (checkIn is null) return null;
 
             // Resolver la cadena de datos: checkIn → reservation → user y flight → airports
-            var reservation = await _reservationRepository.GetByIdAsync(checkIn.ReservationId);
-            var flight      = await _flightRepository.GetByFlightNumberAsync(checkIn.FlightNumber);
+            var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
+            var flight = await _flightRepository.GetByFlightNumberAsync(checkIn.FlightNumber);
 
             // Resolver aeropuertos de origen y destino del vuelo para mostrarlos en el pase
-            var originAirport      = flight is not null
+            var originAirport = flight is not null
                                      ? await _airportRepository.GetByIdAsync(flight.OriginAirportId)
                                      : null;
             var destinationAirport = flight is not null
@@ -145,17 +145,17 @@ namespace TECAir.Core.Services
             // puerta de abordaje, hora de salida, asiento y número de vuelo
             return new BoardingPassDto
             {
-                CheckInId          = checkIn.CheckInId,
-                FlightNumber       = checkIn.FlightNumber,
-                Seat               = checkIn.Seat,
-                BoardingGate       = checkIn.BoardingGate,
-                PrintTime          = checkIn.PrintTime,
-                DepartureTime      = flight?.DepartureTime ?? DateTime.MinValue,
-                ArrivalTime        = flight?.ArrivalTime   ?? DateTime.MinValue,
-                OriginAirport      = originAirport?.Name      ?? "Desconocido",
+                CheckInId = checkIn.CheckInId,
+                FlightNumber = checkIn.FlightNumber,
+                Seat = checkIn.Seat,
+                BoardingGate = checkIn.BoardingGate,
+                PrintTime = checkIn.PrintTime,
+                DepartureTime = flight?.DepartureTime ?? DateTime.MinValue,
+                ArrivalTime = flight?.ArrivalTime ?? DateTime.MinValue,
+                OriginAirport = originAirport?.Name ?? "Desconocido",
                 DestinationAirport = destinationAirport?.Name ?? "Desconocido",
-                PassengerName      = user?.FullName ?? "Desconocido",
-                PassengerEmail     = user?.Email    ?? "Sin correo"
+                PassengerName = user?.FullName ?? "Desconocido",
+                PassengerEmail = user?.Email ?? "Sin correo"
             };
         }
 
@@ -163,13 +163,13 @@ namespace TECAir.Core.Services
         public async Task<IEnumerable<CheckInResponseDto>> GetByFlightNumberAsync(string flightNumber)
         {
             var checkIns = await _checkInRepository.GetByFlightNumberAsync(flightNumber);
-            var result   = new List<CheckInResponseDto>();
+            var result = new List<CheckInResponseDto>();
 
             // Para cada check-in, resolver el nombre del pasajero de forma individual
             foreach (var checkIn in checkIns)
             {
-                var reservation = await _reservationRepository.GetByIdAsync(checkIn.ReservationId);
-                var user        = reservation is not null
+                var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
+                var user = reservation is not null
                                   ? await _userRepository.GetByIdAsync(reservation.UserId)
                                   : null;
 
@@ -184,12 +184,12 @@ namespace TECAir.Core.Services
         // Convierte un modelo CheckIn y el nombre del pasajero en un CheckInResponseDto
         private static CheckInResponseDto MapToResponseDto(CheckIn checkIn, string passengerName) => new()
         {
-            CheckInId     = checkIn.CheckInId,
-            Seat          = checkIn.Seat,
-            BoardingGate  = checkIn.BoardingGate,
-            PrintTime     = checkIn.PrintTime,
-            ReservationId = checkIn.ReservationId,
-            FlightNumber  = checkIn.FlightNumber,
+            CheckInId = checkIn.CheckInId,
+            Seat = checkIn.Seat,
+            BoardingGate = checkIn.BoardingGate,
+            PrintTime = checkIn.PrintTime,
+            ReservationCode = checkIn.ReservationCode,
+            FlightNumber = checkIn.FlightNumber,
             PassengerName = passengerName
         };
     }
