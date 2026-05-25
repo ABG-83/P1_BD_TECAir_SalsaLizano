@@ -15,7 +15,7 @@ namespace TECAir.Core.DTOs.Baggage
     {
         // ID de la reservación del pasajero dueño de la maleta
         [Required]
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Peso de la maleta en kilogramos (mínimo 0.1 kg)
         [Required]

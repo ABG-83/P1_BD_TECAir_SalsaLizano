@@ -151,5 +151,25 @@ namespace TECAir.Data.Repositories
 
             return reservations;
         }
+
+        // Retorna solo las reservaciones pagadas de un vuelo, que son los pasajeros confirmados
+        public async Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber)
+        {
+            const string sql = """
+                SELECT reservation_id, date, payment_status, user_id, flight_number
+                FROM reservations
+                WHERE flight_number = @flightNumber
+                  AND payment_status = 'paid'
+                ORDER BY date ASC;
+            """;
+
+            var reservations = new List<Reservation>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            AddParameter(command, "flightNumber", flightNumber);
+
+            return reservations;
+        }
     }
 }

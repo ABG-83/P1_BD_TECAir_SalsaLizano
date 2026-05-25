@@ -21,15 +21,15 @@ using TECAir.Data.Models;
 namespace TECAir.Core.Services
 {
     public class BaggageService(
-        IBaggageRepository     baggageRepository,
+        IBaggageRepository baggageRepository,
         IReservationRepository reservationRepository,
-        ICheckInRepository     checkInRepository,
-        IUserRepository        userRepository) : IBaggageService
+        ICheckInRepository checkInRepository,
+        IUserRepository userRepository) : IBaggageService
     {
-        private readonly IBaggageRepository     _baggageRepository     = baggageRepository;
+        private readonly IBaggageRepository _baggageRepository = baggageRepository;
         private readonly IReservationRepository _reservationRepository = reservationRepository;
-        private readonly ICheckInRepository     _checkInRepository     = checkInRepository;
-        private readonly IUserRepository        _userRepository        = userRepository;
+        private readonly ICheckInRepository _checkInRepository = checkInRepository;
+        private readonly IUserRepository _userRepository = userRepository;
 
         // ── Registro ───────────────────────────────────────────────────────────
 
@@ -37,20 +37,20 @@ namespace TECAir.Core.Services
         public async Task<BaggageResponseDto> AddBaggageAsync(BaggageDto dto)
         {
             // Verificar que la reservación exista para obtener el user_id requerido por la tabla
-            var reservation = await _reservationRepository.GetByIdAsync(dto.ReservationId)
+            var reservation = await _reservationRepository.GetByCodeAsync(dto.ReservationCode)
                 ?? throw new KeyNotFoundException(
-                    $"No existe una reservación con ID {dto.ReservationId}.");
+                    $"No existe una reservación con ID {dto.ReservationCode}.");
 
             // Verificar que el pasajero ya haya hecho check-in (regla del enunciado)
-            var checkIn = await _checkInRepository.GetByReservationIdAsync(dto.ReservationId);
+            var checkIn = await _checkInRepository.GetByReservationCodeAsync(dto.ReservationCode);
             if (checkIn is null)
                 throw new InvalidOperationException(
-                    $"El pasajero de la reservación {dto.ReservationId} no ha realizado check-in. " +
+                    $"El pasajero de la reservación {dto.ReservationCode} no ha realizado check-in. " +
                     "Solo se pueden registrar maletas a pasajeros ya chequeados.");
 
             // Contar las maletas actuales para determinar la posición de la nueva
-            int currentCount = await _baggageRepository.CountByReservationIdAsync(dto.ReservationId);
-            int newPosition  = currentCount + 1;
+            int currentCount = await _baggageRepository.CountByReservationCodeAsync(dto.ReservationCode);
+            int newPosition = currentCount + 1;
 
             // Calcular el cargo adicional según la tarifa del enunciado
             decimal chargeForThisBag = CalculateChargeForPosition(newPosition);
@@ -58,10 +58,10 @@ namespace TECAir.Core.Services
             // Construir y persistir la maleta con los datos de la tabla existente
             var baggage = new Baggage
             {
-                Weight        = dto.Weight,
-                Color         = dto.Color.Trim(),
-                ReservationId = dto.ReservationId,
-                UserId        = reservation.UserId
+                Weight = dto.Weight,
+                Color = dto.Color.Trim(),
+                ReservationCode = dto.ReservationCode,
+                UserId = reservation.UserId
             };
 
             int newId = await _baggageRepository.CreateAsync(baggage);
@@ -79,25 +79,25 @@ namespace TECAir.Core.Services
         // ── Consultas ──────────────────────────────────────────────────────────
 
         // Retorna todas las maletas de una reservación con su cobro individual
-        public async Task<IEnumerable<BaggageResponseDto>> GetByReservationIdAsync(int reservationId)
+        public async Task<IEnumerable<BaggageResponseDto>> GetByReservationCodeAsync(string reservationCode)
         {
-            var baggages = await _baggageRepository.GetByReservationIdAsync(reservationId);
+            var baggages = await _baggageRepository.GetByReservationCodeAsync(reservationCode);
 
             // Resolver el nombre del pasajero una sola vez para todas las maletas
-            var reservation   = await _reservationRepository.GetByIdAsync(reservationId);
-            var user          = reservation is not null
+            var reservation = await _reservationRepository.GetByCodeAsync(reservationCode);
+            var user = reservation is not null
                                 ? await _userRepository.GetByIdAsync(reservation.UserId)
                                 : null;
             var passengerName = user?.FullName ?? "Desconocido";
 
-            var result   = new List<BaggageResponseDto>();
+            var result = new List<BaggageResponseDto>();
             int position = 1;
 
             // Asignar posición y cobro a cada maleta de la lista
             foreach (var bag in baggages)
             {
                 decimal chargeForBag = CalculateChargeForPosition(position);
-                decimal totalSoFar   = CalculateTotalCharge(position);
+                decimal totalSoFar = CalculateTotalCharge(position);
                 result.Add(MapToResponseDto(bag, passengerName, position, chargeForBag, totalSoFar));
                 position++;
             }
@@ -112,16 +112,16 @@ namespace TECAir.Core.Services
             if (baggage is null) return null;
 
             // Obtener todas las maletas de la reservación para determinar la posición real
-            var allBags  = (await _baggageRepository.GetByReservationIdAsync(baggage.ReservationId)).ToList();
+            var allBags = (await _baggageRepository.GetByReservationCodeAsync(baggage.ReservationCode)).ToList();
             int position = allBags.FindIndex(b => b.BaggageId == baggageId) + 1;
 
-            var reservation   = await _reservationRepository.GetByIdAsync(baggage.ReservationId);
-            var user          = reservation is not null
+            var reservation = await _reservationRepository.GetByCodeAsync(baggage.ReservationCode);
+            var user = reservation is not null
                                 ? await _userRepository.GetByIdAsync(reservation.UserId)
                                 : null;
 
             decimal chargeForBag = CalculateChargeForPosition(position);
-            decimal totalCharge  = CalculateTotalCharge(allBags.Count);
+            decimal totalCharge = CalculateTotalCharge(allBags.Count);
 
             return MapToResponseDto(baggage, user?.FullName ?? "Desconocido", position, chargeForBag, totalCharge);
         }
@@ -147,19 +147,19 @@ namespace TECAir.Core.Services
         // Construye el DTO de respuesta con los datos de la maleta y su cobro calculado
         private static BaggageResponseDto MapToResponseDto(
             Baggage baggage,
-            string  passengerName,
-            int     position,
+            string passengerName,
+            int position,
             decimal chargeForThisBag,
             decimal totalCharge) => new()
-        {
-            BaggageId             = baggage.BaggageId,
-            Weight                = baggage.Weight,
-            Color                 = baggage.Color,
-            ReservationId         = baggage.ReservationId,
-            PassengerName         = passengerName,
-            BaggagePosition       = position,
-            ExtraChargeForThisBag = chargeForThisBag,
-            TotalExtraCharge      = totalCharge
-        };
+            {
+                BaggageId = baggage.BaggageId,
+                Weight = baggage.Weight,
+                Color = baggage.Color,
+                ReservationCode = baggage.ReservationCode,
+                PassengerName = passengerName,
+                BaggagePosition = position,
+                ExtraChargeForThisBag = chargeForThisBag,
+                TotalExtraCharge = totalCharge
+            };
     }
 }

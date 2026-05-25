@@ -31,5 +31,9 @@ namespace TECAir.Data.Interfaces
         /// Cancels a booking by changing its state or removing the transaction record.
         /// </summary>
         Task<bool> CancelAsync(string reservationCode);
+
+        // Retorna solo las reservaciones con payment_status = 'paid' de un vuelo
+        // Es el método central para la apertura de vuelos (pasajeros confirmados)
+        Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber);
     }
 }

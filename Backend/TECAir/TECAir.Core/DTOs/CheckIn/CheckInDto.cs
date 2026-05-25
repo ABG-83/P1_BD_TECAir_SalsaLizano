@@ -21,7 +21,7 @@ namespace TECAir.Core.DTOs.CheckIn
         // ID de la reservación del pasajero a chequear
         // Debe corresponder a una reservación existente con payment_status = 'paid'
         [Required(ErrorMessage = "El ID de la reservación es obligatorio.")]
-        public int ReservationId { get; set; }
+        public string ReservationCode { get; set; } = string.Empty;
 
         // Asiento de preferencia seleccionado por el pasajero (ej. "12A", "5B")
         // Se valida que no esté ya ocupado en el mismo vuelo

@@ -66,14 +66,14 @@ namespace TECAir.API.Controllers
             return Ok(baggage);
         }
 
-        // GET /api/baggage/reservation/{reservationId}
+        // GET /api/baggage/reservation/{reservationCode}
         // Retorna todas las maletas de un pasajero con el desglose completo de cobros.
         // Permite al funcionario ver el total acumulado de cargos adicionales.
-        [HttpGet("reservation/{reservationId:int}")]
+        [HttpGet("reservation/{reservationCode}")]
         [ProducesResponseType(typeof(IEnumerable<BaggageResponseDto>), StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetByReservation(int reservationId)
+        public async Task<IActionResult> GetByReservation(string reservationCode)
         {
-            var baggages = await _baggageService.GetByReservationIdAsync(reservationId);
+            var baggages = await _baggageService.GetByReservationCodeAsync(reservationCode);
             return Ok(baggages);
         }
     }

@@ -22,17 +22,17 @@ using TECAir.Data.Models;
 namespace TECAir.Core.Services
 {
     public class FlightClosingService(
-        IFlightRepository    flightRepository,
-        ICheckInRepository   checkInRepository,
-        IBaggageRepository   baggageRepository,
+        IFlightRepository flightRepository,
+        ICheckInRepository checkInRepository,
+        IBaggageRepository baggageRepository,
         IReservationRepository reservationRepository,
-        IUserRepository      userRepository) : IFlightClosingService
+        IUserRepository userRepository) : IFlightClosingService
     {
-        private readonly IFlightRepository      _flightRepository      = flightRepository;
-        private readonly ICheckInRepository     _checkInRepository     = checkInRepository;
-        private readonly IBaggageRepository     _baggageRepository     = baggageRepository;
+        private readonly IFlightRepository _flightRepository = flightRepository;
+        private readonly ICheckInRepository _checkInRepository = checkInRepository;
+        private readonly IBaggageRepository _baggageRepository = baggageRepository;
         private readonly IReservationRepository _reservationRepository = reservationRepository;
-        private readonly IUserRepository        _userRepository        = userRepository;
+        private readonly IUserRepository _userRepository = userRepository;
 
         // ── Cierre ─────────────────────────────────────────────────────────────
 
@@ -81,35 +81,35 @@ namespace TECAir.Core.Services
             foreach (var checkIn in checkIns)
             {
                 // Obtener la reservación para llegar al user_id del pasajero
-                var reservation = await _reservationRepository.GetByIdAsync(checkIn.ReservationId);
+                var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
                 var user = reservation is not null
                     ? await _userRepository.GetByIdAsync(reservation.UserId)
                     : null;
 
                 // Contar las maletas de la reservación asociada a este check-in
-                var baggageCount = await _baggageRepository.CountByReservationIdAsync(checkIn.ReservationId);
+                var baggageCount = await _baggageRepository.CountByReservationCodeAsync(checkIn.ReservationCode);
 
                 passengers.Add(new CheckedInPassengerDto
                 {
-                    CheckInId        = checkIn.CheckInId,
-                    Seat             = checkIn.Seat,
-                    BoardingGate     = checkIn.BoardingGate,
-                    FullName         = user?.FullName ?? "Desconocido",
-                    Email            = user?.Email   ?? "Sin correo",
-                    BaggageCount     = baggageCount,
+                    CheckInId = checkIn.CheckInId,
+                    Seat = checkIn.Seat,
+                    BoardingGate = checkIn.BoardingGate,
+                    FullName = user?.FullName ?? "Desconocido",
+                    Email = user?.Email ?? "Sin correo",
+                    BaggageCount = baggageCount,
                     BaggageSurcharge = CalcularCargoPorMaletas(baggageCount)
                 });
             }
 
             return new FlightClosingDto
             {
-                FlightNumber    = flight.FlightNumber,
-                Status          = flight.Status.ToString(),
-                DepartureTime   = flight.DepartureTime,
-                ArrivalTime     = flight.ArrivalTime,
+                FlightNumber = flight.FlightNumber,
+                Status = flight.Status.ToString(),
+                DepartureTime = flight.DepartureTime,
+                ArrivalTime = flight.ArrivalTime,
                 TotalPassengers = passengers.Count,
-                TotalBaggages   = passengers.Sum(p => p.BaggageCount),
-                Passengers      = passengers
+                TotalBaggages = passengers.Sum(p => p.BaggageCount),
+                Passengers = passengers
             };
         }
 
