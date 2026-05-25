@@ -1,19 +1,18 @@
 // =============================================================================
-// Archivo  : CreatePromotionDto.cs
+// Archivo  : UpdatePromotionDto.cs
 // Capa     : TECAir.Core → DTOs/Promotions
-// Propósito: Define el cuerpo JSON que el cliente envía al POST /api/promotions
-//            para registrar una nueva promoción entre dos aeropuertos.
-//            La imagen es opcional; is_active se establece en TRUE por defecto
-//            en el servicio sin necesidad de que el cliente lo envíe.
+// Propósito: Define el cuerpo JSON que el cliente envía al PUT /api/promotions/{id}
+//            para editar una promoción existente. Incluye IsActive para que el
+//            administrador pueda activar o desactivar la promoción sin necesitar
+//            un endpoint separado.
 // =============================================================================
 
 using System.ComponentModel.DataAnnotations;
 
 namespace TECAir.Core.DTOs.Promotions
 {
-    public class CreatePromotionDto
+    public class UpdatePromotionDto
     {
-        // Precio promocional de la ruta, debe ser mayor a 0
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a cero.")]
         public decimal Price { get; set; }
@@ -25,16 +24,18 @@ namespace TECAir.Core.DTOs.Promotions
         [Required]
         public DateOnly EndDate { get; set; }
 
-        // Ruta de imagen o URL, campo opcional que puede omitirse en el JSON
+        // Enviar null para eliminar la imagen actual de la promoción
         [MaxLength(300)]
         public string? Image { get; set; }
 
-        // ID del aeropuerto de origen de la promoción
+        // Permite activar o desactivar la promoción durante la edición
+        [Required]
+        public bool IsActive { get; set; }
+
         [Required]
         [Range(1, int.MaxValue)]
         public int OriginAirportId { get; set; }
 
-        // ID del aeropuerto de destino de la promoción
         [Required]
         [Range(1, int.MaxValue)]
         public int DestinationAirportId { get; set; }

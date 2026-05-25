@@ -45,10 +45,10 @@ namespace TECAir.Data.Repositories
         private static FlightRoute MapStopRow(IDataReader r) => new()
         {
             FlightNumber = r.GetString(r.GetOrdinal("flight_number")),
-            AirportId    = r.GetInt32(r.GetOrdinal("airport_id")),
-            StopOrder    = r.GetInt32(r.GetOrdinal("stop_order"))
+            AirportId = r.GetInt32(r.GetOrdinal("airport_id")),
+            StopOrder = r.GetInt32(r.GetOrdinal("stop_order"))
         };
- 
+
         // Crea y agrega un parámetro al comando
         private static void AddParam(IDbCommand cmd, string name, object value)
         {
@@ -60,7 +60,7 @@ namespace TECAir.Data.Repositories
 
         // ── Queries ────────────────────────────────────────────────────────────
 
-           public async Task<IEnumerable<Flight>> GetAllAsync()
+        public async Task<IEnumerable<Flight>> GetAllAsync()
         {
             const string sql = """
                 SELECT flight_number, departure_time, arrival_time, status,
@@ -68,19 +68,19 @@ namespace TECAir.Data.Repositories
                 FROM flights
                 ORDER BY departure_time ASC;
                 """;
- 
+
             var flights = new List<Flight>();
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
- 
+
             using var reader = command.ExecuteReader();
             while (reader.Read())
                 flights.Add(MapRow(reader));
- 
+
             return flights;
         }
- 
+
         public async Task<Flight?> GetByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
@@ -89,16 +89,16 @@ namespace TECAir.Data.Repositories
                 FROM flights
                 WHERE flight_number = @flightNumber;
                 """;
- 
+
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
             AddParam(command, "flightNumber", flightNumber);
- 
+
             using var reader = command.ExecuteReader();
             return reader.Read() ? MapRow(reader) : null;
         }
- 
+
         public async Task<IEnumerable<FlightRoute>> GetStopsByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
@@ -107,20 +107,20 @@ namespace TECAir.Data.Repositories
                 WHERE flight_number = @flightNumber
                 ORDER BY stop_order ASC;
                 """;
- 
+
             var stops = new List<FlightRoute>();
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
             AddParam(command, "flightNumber", flightNumber);
- 
+
             using var reader = command.ExecuteReader();
             while (reader.Read())
                 stops.Add(MapStopRow(reader));
- 
+
             return stops;
         }
- 
+
         public async Task CreateAsync(Flight flight)
         {
             const string sql = """
@@ -133,37 +133,56 @@ namespace TECAir.Data.Repositories
                     @airplanePlateNumber, @originAirportId, @destinationAirportId
                 );
                 """;
- 
+
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
- 
-            AddParam(command, "flightNumber",        flight.FlightNumber);
-            AddParam(command, "departureTime",       flight.DepartureTime);
-            AddParam(command, "arrivalTime",         flight.ArrivalTime);
-            AddParam(command, "status",              flight.Status.ToString());
+
+            AddParam(command, "flightNumber", flight.FlightNumber);
+            AddParam(command, "departureTime", flight.DepartureTime);
+            AddParam(command, "arrivalTime", flight.ArrivalTime);
+            AddParam(command, "status", flight.Status.ToString());
             AddParam(command, "airplanePlateNumber", flight.AirplanePlateNumber);
-            AddParam(command, "originAirportId",     flight.OriginAirportId);
-            AddParam(command, "destinationAirportId",flight.DestinationAirportId);
- 
+            AddParam(command, "originAirportId", flight.OriginAirportId);
+            AddParam(command, "destinationAirportId", flight.DestinationAirportId);
+
             command.ExecuteNonQuery();
         }
- 
+
         public async Task AddStopAsync(FlightRoute stop)
         {
             const string sql = """
                 INSERT INTO flight_routes (flight_number, airport_id, stop_order)
                 VALUES (@flightNumber, @airportId, @stopOrder);
                 """;
- 
+
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
             command.CommandText = sql;
- 
+
             AddParam(command, "flightNumber", stop.FlightNumber);
-            AddParam(command, "airportId",    stop.AirportId);
-            AddParam(command, "stopOrder",    stop.StopOrder);
- 
+            AddParam(command, "airportId", stop.AirportId);
+            AddParam(command, "stopOrder", stop.StopOrder);
+
+            command.ExecuteNonQuery();
+        }
+
+        // Actualiza solo la columna 'status' del vuelo identificado por su número
+        public async Task UpdateStatusAsync(string flightNumber, FlightStatus status)
+        {
+            const string sql = """
+                UPDATE flights
+                SET status = @status
+                WHERE flight_number = @flightNumber;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            AddParam(command, "status", status.ToString());
+            AddParam(command, "flightNumber", flightNumber);
+
             command.ExecuteNonQuery();
         }
         // Búsqueda por ruta origen → destino. Retorna vuelos que tengan esa ruta, incluyendo los que tengan escalas intermedias. 
@@ -203,6 +222,39 @@ namespace TECAir.Data.Repositories
             }
 
             return flights;
+        }
+
+        /// <inheritdoc />
+        public async Task<int> GetCapacityByFlightNumberAsync(string flightNumber)
+        {
+            // Join the flight directory tracking table with the physical airplane metadata table
+            // to extract the absolute maximum seating capacity allocation limit.
+            const string sql = @"
+                SELECT a.seat_count
+                FROM flights f
+                INNER JOIN airplanes a ON f.airplane_plate_number = a.plate_number
+                WHERE f.flight_number = @FlightNumber;";
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            // Manual abstract parameter setup binding
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = "@FlightNumber";
+            parameter.Value = flightNumber ?? (object)DBNull.Value;
+            command.Parameters.Add(parameter);
+
+            // Execute scalar since we expect an absolute integer value back from the engine block
+            var result = command.ExecuteScalar();
+
+            if (result == null || result == DBNull.Value)
+            {
+                // Return 0 as an indicator flag to notify the service that the flight manifest is uninitialized
+                return 0;
+            }
+
+            return Convert.ToInt32(result);
         }
     }
 }

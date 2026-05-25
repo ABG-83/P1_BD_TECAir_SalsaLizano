@@ -53,8 +53,8 @@ namespace TECAir.Tests.Repositories
             reader.Setup(r => r.GetString(phoneIdx)).Returns(user.PhoneNumber);
             reader.Setup(r => r.GetString(roleIdx)).Returns(user.Role.ToString());
             reader.Setup(r => r.GetFloat(milesIdx)).Returns(user.Miles);
-            reader.Setup(r => r.GetString(collegeIdIdx)).Returns(user.CollegeIdNumber);
-            reader.Setup(r => r.GetString(collegeIdx)).Returns(user.College);
+            reader.Setup(r => r.GetString(collegeIdIdx)).Returns(user.CollegeIdNumber ?? string.Empty);
+            reader.Setup(r => r.GetString(collegeIdx)).Returns(user.College ?? string.Empty);
 
             return reader;
         }

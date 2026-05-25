@@ -24,19 +24,28 @@ namespace TECAir.Data.Interfaces
     {
         // Retorna todos los vuelos ordenados por hora de salida
         Task<IEnumerable<Flight>> GetAllAsync();
- 
+
         // Busca un vuelo por su número de vuelo. Retorna null si no existe.
         Task<Flight?> GetByFlightNumberAsync(string flightNumber);
- 
+
         // Retorna las escalas de un vuelo ordenadas por StopOrder (1, 2, 3...)
         Task<IEnumerable<FlightRoute>> GetStopsByFlightNumberAsync(string flightNumber);
- 
+
         // Inserta un nuevo vuelo en la tabla VUELO
         Task CreateAsync(Flight flight);
- 
+
         // Inserta una escala en VUELO_ESCALA. Se llama una vez por cada aeropuerto intermedio.
         Task AddStopAsync(FlightRoute stop);
         // Busqueda por ruta origen → destino. Retorna vuelos que tengan esa ruta, incluyendo los que tengan escalas intermedias.
         Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId);
+        // Actualiza el estado operacional de un vuelo (Issue #29 — apertura/cierre de vuelos)
+        Task UpdateStatusAsync(string flightNumber, FlightStatus newStatus);
+
+        /// <summary>
+        /// Evaluates structural configuration properties to fetch the absolute maximum seat limit capacity assigned to an active aircraft.
+        /// </summary>
+        /// <param name="flightNumber">The distinct structural alphanumeric indicator code of the targeted aircraft run.</param>
+        /// <returns>The numerical ceiling limit specifying the seat capacity manifest profile index.</returns>
+        Task<int> GetCapacityByFlightNumberAsync(string flightNumber);
     }
 }

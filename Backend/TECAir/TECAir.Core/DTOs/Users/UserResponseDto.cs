@@ -11,7 +11,7 @@ namespace TECAir.Core.DTOs.Users
         public string PhoneNumber { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public float Miles { get; set; }
-        public string CollegeIdNumber { get; set; } = string.Empty;
-        public string College { get; set; } = string.Empty;
+        public string? CollegeIdNumber { get; set; } = string.Empty;
+        public string? College { get; set; } = string.Empty;
     }
 }

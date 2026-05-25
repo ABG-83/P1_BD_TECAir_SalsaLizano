@@ -1,3 +1,16 @@
+// =============================================================================
+// Archivo  : UserRepository.cs
+// Capa     : TECAir.Data → Repositories
+// Propósito: Implementación de IUserRepository usando ADO.NET puro contra
+//            la tabla 'users' en PostgreSQL.
+//
+// Historial de cambios:
+//   Issue #29 — Apertura de Vuelos:
+//     Fix en MapRow: college_id_number y college son nullables en la BD.
+//     Usuarios no estudiantes tienen NULL en esos campos, lo que causaba
+//     una excepción al llamar GetString sin verificar IsDBNull primero.
+// =============================================================================
+
 using TECAir.Data.Models;
 using TECAir.Data.Interfaces;
 using Npgsql;
@@ -7,29 +20,28 @@ using NpgsqlTypes;
 
 namespace TECAir.Data.Repositories
 {
-    /// <summary>
-    /// Handles all database operations for <see cref="User"/> using raw Npgsql.
-    /// </summary>
     public class UserRepository(IDbConnectionFactory connectionFactory) : IUserRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
         // ── Helpers ────────────────────────────────────────────────────────────
 
-        /// <summary>Maps a data-reader row to a <see cref="User"/> instance.</summary>
+        // Convierte una fila del DataReader en un objeto User
+        // Los campos college_id_number y college son nullables: usuarios no estudiantes los tienen en NULL
         private static User MapRow(IDataReader r) => new()
         {
-            UserId = r.GetInt32(r.GetOrdinal("user_id")),
-            FullName = r.GetString(r.GetOrdinal("full_name")),
-            Email = r.GetString(r.GetOrdinal("email")),
-            PhoneNumber = r.GetString(r.GetOrdinal("phone_number")),
-            Role = Enum.Parse<UserRole>(r.GetString(r.GetOrdinal("role")), ignoreCase: true),
-            Miles = r.GetFloat(r.GetOrdinal("miles")),
-            CollegeIdNumber = r.GetString(r.GetOrdinal("college_id_number")),
-            College = r.GetString(r.GetOrdinal("college"))
+            UserId          = r.GetInt32(r.GetOrdinal("user_id")),
+            FullName        = r.GetString(r.GetOrdinal("full_name")),
+            Email           = r.GetString(r.GetOrdinal("email")),
+            PhoneNumber     = r.GetString(r.GetOrdinal("phone_number")),
+            Role            = Enum.Parse<UserRole>(r.GetString(r.GetOrdinal("role")), ignoreCase: true),
+            Miles           = r.GetFloat(r.GetOrdinal("miles")),
+            // Se verifica DBNull antes de leer para evitar excepciones con usuarios no estudiantes
+            CollegeIdNumber = r.IsDBNull(r.GetOrdinal("college_id_number")) ? null : r.GetString(r.GetOrdinal("college_id_number")),
+            College         = r.IsDBNull(r.GetOrdinal("college"))           ? null : r.GetString(r.GetOrdinal("college"))
         };
 
-        /// <summary>Creates and adds a plain IDbDataParameter to a command.</summary>
+        // Crea y agrega un parámetro al comando
         private static void AddParam(IDbCommand cmd, string name, object value)
         {
             var p = cmd.CreateParameter();
@@ -38,10 +50,7 @@ namespace TECAir.Data.Repositories
             cmd.Parameters.Add(p);
         }
 
-        /// <summary>
-        /// Adds the role parameter with the correct Postgres ENUM cast.
-        /// Falls back to plain string when the command is not a real NpgsqlCommand (e.g. in tests).
-        /// </summary>
+        // El rol se almacena como tipo ENUM en PostgreSQL, requiere NpgsqlDbType.Unknown para el cast correcto
         private static void AddRoleParam(IDbCommand cmd, string name, UserRole role)
         {
             if (cmd is NpgsqlCommand npgsqlCmd)
@@ -59,7 +68,7 @@ namespace TECAir.Data.Repositories
 
         // ── Queries ────────────────────────────────────────────────────────────
 
-        /// <inheritdoc/>
+        // Retorna todos los usuarios ordenados por ID
         public async Task<IEnumerable<User>> GetAllAsync()
         {
             const string sql = """
@@ -81,7 +90,7 @@ namespace TECAir.Data.Repositories
             return users;
         }
 
-        /// <inheritdoc/>
+        // Busca un usuario por su ID; retorna null si no existe
         public async Task<User?> GetByIdAsync(int userId)
         {
             const string sql = """
@@ -100,7 +109,7 @@ namespace TECAir.Data.Repositories
             return rdr.Read() ? MapRow(rdr) : null;
         }
 
-        /// <inheritdoc/>
+        // Busca un usuario por su correo electrónico; retorna null si no existe
         public async Task<User?> GetByEmailAsync(string email)
         {
             const string sql = """
@@ -119,7 +128,7 @@ namespace TECAir.Data.Repositories
             return rdr.Read() ? MapRow(rdr) : null;
         }
 
-        /// <inheritdoc/>
+        // Inserta un nuevo usuario y retorna el ID auto-generado
         public async Task<int> CreateAsync(User user)
         {
             const string sql = """
@@ -135,26 +144,26 @@ namespace TECAir.Data.Repositories
             cmd.CommandText = sql;
 
             AddParam(cmd, "fullName", user.FullName);
-            AddParam(cmd, "email", user.Email);
-            AddParam(cmd, "phone", user.PhoneNumber);
+            AddParam(cmd, "email",    user.Email);
+            AddParam(cmd, "phone",    user.PhoneNumber);
             AddRoleParam(cmd, "role", user.Role);
-            AddParam(cmd, "miles", user.Miles);
-            AddParam(cmd, "collegeId", user.CollegeIdNumber);
-            AddParam(cmd, "college", user.College);
+            AddParam(cmd, "miles",    user.Miles);
+            AddParam(cmd, "collegeId",user.CollegeIdNumber ?? (object)DBNull.Value);
+            AddParam(cmd, "college",  user.College         ?? (object)DBNull.Value);
 
             var result = cmd.ExecuteScalar();
             return Convert.ToInt32(result);
         }
 
-        /// <inheritdoc/>
+        // Actualiza los campos editables de un usuario existente
         public async Task<bool> UpdateAsync(User user)
         {
             const string sql = """
                 UPDATE users
-                SET full_name        = @fullName,
-                    phone_number     = @phone,
+                SET full_name         = @fullName,
+                    phone_number      = @phone,
                     college_id_number = @collegeId,
-                    college          = @college
+                    college           = @college
                 WHERE user_id = @userId;
                 """;
 
@@ -163,15 +172,15 @@ namespace TECAir.Data.Repositories
             cmd.CommandText = sql;
 
             AddParam(cmd, "fullName", user.FullName);
-            AddParam(cmd, "phone", user.PhoneNumber);
-            AddParam(cmd, "collegeId", user.CollegeIdNumber);
-            AddParam(cmd, "college", user.College);
-            AddParam(cmd, "userId", user.UserId);
+            AddParam(cmd, "phone",    user.PhoneNumber);
+            AddParam(cmd, "collegeId",user.CollegeIdNumber ?? (object)DBNull.Value);
+            AddParam(cmd, "college",  user.College         ?? (object)DBNull.Value);
+            AddParam(cmd, "userId",   user.UserId);
 
             return cmd.ExecuteNonQuery() > 0;
         }
 
-        /// <inheritdoc/>
+        // Elimina un usuario por su ID; retorna true si se eliminó correctamente
         public async Task<bool> DeleteAsync(int userId)
         {
             const string sql = "DELETE FROM users WHERE user_id = @userId;";
