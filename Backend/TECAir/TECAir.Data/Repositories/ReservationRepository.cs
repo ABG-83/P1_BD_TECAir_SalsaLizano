@@ -156,10 +156,10 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
-                SELECT reservation_id, date, payment_status, user_id, flight_number
+                SELECT reservation_code, date, payment_state, user_id, flight_number
                 FROM reservations
                 WHERE flight_number = @flightNumber
-                  AND payment_status = 'paid'
+                  AND payment_state = 'Paid'
                 ORDER BY date ASC;
             """;
 
@@ -168,6 +168,12 @@ namespace TECAir.Data.Repositories
             using var command = connection.CreateCommand();
             command.CommandText = sql;
             AddParameter(command, "flightNumber", flightNumber);
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                reservations.Add(MapRow(reader));
+            }
 
             return reservations;
         }

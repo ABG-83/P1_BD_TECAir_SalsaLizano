@@ -31,9 +31,54 @@ Busca la sección `ConnectionStrings` dentro de tu `appsettings.json` y reemplaz
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Port=5432;Database=tec_air_db;Username=TU_USUARIO;Password=TU_CONTRASEÑA"
+  "DefaultConnection": "Host=localhost;Port=5432;Database=tecair_dev;Username=TU_USUARIO;Password=TU_CONTRASEÑA"
 }
 ```
+
+## 🗄️ Iniciar la Base de Datos PostgreSQL
+
+Estas instrucciones asumen que ya tienes PostgreSQL corriendo localmente y que el comando `psql` está disponible en tu terminal.
+
+### 0. Guardar tu contraseña una sola vez
+
+En PowerShell puedes guardar la contraseña de `postgres` en una variable de entorno para esta sesión y reutilizarla en todos los comandos:
+
+```powershell
+$env:PGPASS = "TU_CONTRASEÑA"
+$PGHOST = "localhost"
+$PGUSER = "postgres"
+$PGDATABASE = "tecair_dev"
+```
+
+### 1. Crear la base de datos
+
+```powershell
+psql -h $PGHOST -U $PGUSER -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $PGDATABASE;"
+psql -h $PGHOST -U $PGUSER -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $PGDATABASE;"
+```
+
+### 2. Cargar el esquema vacío
+
+```powershell
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -v ON_ERROR_STOP=1 -f "TECAir.Data/Scripts/EmptyState.sql"
+```
+
+### 3. Cargar los datos iniciales
+
+```powershell
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -v ON_ERROR_STOP=1 -f "TECAir.Data/Scripts/InitialState.sql"
+```
+
+### 4. Verificar que quedó cargado
+
+```powershell
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c "SELECT COUNT(*) FROM users;"
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c "SELECT COUNT(*) FROM reservations;"
+psql -h $PGHOST -U $PGUSER -d $PGDATABASE -c "SELECT COUNT(*) FROM payments;"
+```
+
+> Si prefieres, también puedes usar `PGPASSWORD` en lugar de `$env:PGPASS`.
+> Si `psql` no está en tu PATH, usa la ruta completa del ejecutable o abre la terminal desde `pgAdmin`/el cliente que uses.
 
 ## 🏃 Ejecucción del Proyecto
 

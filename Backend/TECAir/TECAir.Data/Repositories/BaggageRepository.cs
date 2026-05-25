@@ -69,7 +69,7 @@ namespace TECAir.Data.Repositories
             const string sql = """
                 SELECT baggage_id, weight, color, reservation_code, user_id
                 FROM baggages
-                WHERE reservation_id = @reservationCode;
+                WHERE reservation_code = @reservationCode;
                 """;
 
             var baggages = new List<Baggage>();

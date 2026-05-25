@@ -230,9 +230,9 @@ namespace TECAir.Data.Repositories
             // Join the flight directory tracking table with the physical airplane metadata table
             // to extract the absolute maximum seating capacity allocation limit.
             const string sql = @"
-                SELECT a.seat_capacity 
+                SELECT a.seat_count
                 FROM flights f
-                INNER JOIN airplanes a ON f.airplane_id = a.airplane_id 
+                INNER JOIN airplanes a ON f.airplane_plate_number = a.plate_number
                 WHERE f.flight_number = @FlightNumber;";
 
             using var connection = await _connectionFactory.CreateConnectionAsync();
