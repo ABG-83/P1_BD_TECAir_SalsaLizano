@@ -1,10 +1,3 @@
-// =============================================================================
-// Archivo  : ReservationRepository.cs
-// Capa     : TECAir.Data → Repositories
-// Propósito: Implementación de IReservationRepository usando ADO.NET puro.
-//            Ejecuta consultas sobre la tabla 'reservations'.
-// =============================================================================
-
 using System.Data;
 using TECAir.Data.Connection;
 using TECAir.Data.Interfaces;
@@ -12,96 +5,151 @@ using TECAir.Data.Models;
 
 namespace TECAir.Data.Repositories
 {
+    /// <summary>
+    /// SQL-backed implementation of <see cref="IReservationRepository"/> using native ADO.NET.
+    /// </summary>
     public class ReservationRepository(IDbConnectionFactory connectionFactory) : IReservationRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
         // ── Helpers ────────────────────────────────────────────────────────────
 
-        // Convierte una fila del DataReader en un objeto Reservation
+        /// <summary>
+        /// Maps a single row from the data reader into a <see cref="Reservation"/> domain object.
+        /// </summary>
         private static Reservation MapRow(IDataReader r) => new()
         {
-            ReservationId = r.GetInt32(r.GetOrdinal("reservation_id")),
-            Date          = r.GetDateTime(r.GetOrdinal("date")),
-            PaymentStatus = r.GetString(r.GetOrdinal("payment_status")),
-            UserId        = r.GetInt32(r.GetOrdinal("user_id")),
-            FlightNumber  = r.GetString(r.GetOrdinal("flight_number"))
+            ReservationCode = r.GetString(r.GetOrdinal("reservation_code")),
+            Date = r.GetDateTime(r.GetOrdinal("date")),
+            PaymentState = Enum.Parse<PaymentStatus>(r.GetString(r.GetOrdinal("payment_state"))),
+            UserId = r.GetInt32(r.GetOrdinal("user_id")),
+            FlightNumber = r.GetString(r.GetOrdinal("flight_number"))
         };
 
-        // Crea y agrega un parámetro al comando
-        private static void AddParam(IDbCommand cmd, string name, object value)
+        /// <summary>
+        /// Utility helper to abstract and chain parameter creation cleanly.
+        /// </summary>
+        private static void AddParameter(IDbCommand command, string name, object value)
         {
-            var p = cmd.CreateParameter();
-            p.ParameterName = name;
-            p.Value = value;
-            cmd.Parameters.Add(p);
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = name;
+            parameter.Value = value;
+            command.Parameters.Add(parameter);
+        }
+
+        // ── Queries ───────────────────────────────────────────────────────────
+
+        /// <inheritdoc />
+        public async Task<string> CreateAsync(Reservation reservation)
+        {
+            const string query = """
+                INSERT INTO reservations (reservation_code, date, payment_state, user_id, flight_number)
+                VALUES (@code, @date, @state, @userId, @flightNum)
+                RETURNING reservation_code;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            AddParameter(command, "@code", reservation.ReservationCode);
+            AddParameter(command, "@date", reservation.Date);
+            AddParameter(command, "@state", reservation.PaymentState.ToString());
+            AddParameter(command, "@userId", reservation.UserId);
+            AddParameter(command, "@flightNum", reservation.FlightNumber);
+
+            var result = await Task.Run(() => command.ExecuteScalar());
+            return result?.ToString() ?? string.Empty;
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> UpdateAsync(Reservation reservation)
+        {
+            const string query = """
+                UPDATE reservations 
+                SET payment_state = @state, 
+                    date = @date
+                WHERE reservation_code = @code;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            AddParameter(command, "@state", reservation.PaymentState.ToString());
+            AddParameter(command, "@date", reservation.Date);
+            AddParameter(command, "@code", reservation.ReservationCode);
+
+            int rowsAffected = await Task.Run(() => command.ExecuteNonQuery());
+            return rowsAffected > 0;
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> CancelAsync(string reservationCode)
+        {
+            // Siguiendo buenas prácticas de negocio aéreo, cancelamos cambiando el estado. 
+            // Si tu base prefiere un DELETE físico, cambialo a: DELETE FROM reservations WHERE...
+            const string query = """
+                UPDATE reservations 
+                SET payment_state = 'Failed' 
+                WHERE reservation_code = @code;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            AddParameter(command, "@code", reservationCode);
+
+            int rowsAffected = await Task.Run(() => command.ExecuteNonQuery());
+            return rowsAffected > 0;
         }
 
         // ── Queries ────────────────────────────────────────────────────────────
 
-        // Retorna todas las reservaciones de un vuelo sin filtrar por estado de pago
-        public async Task<IEnumerable<Reservation>> GetByFlightNumberAsync(string flightNumber)
+        /// <inheritdoc />
+        public async Task<Reservation?> GetByCodeAsync(string reservationCode)
         {
-            const string sql = """
-                SELECT reservation_id, date, payment_status, user_id, flight_number
-                FROM reservations
-                WHERE flight_number = @flightNumber
-                ORDER BY date ASC;
-                """;
-
-            var reservations = new List<Reservation>();
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            AddParam(command, "flightNumber", flightNumber);
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-                reservations.Add(MapRow(reader));
-
-            return reservations;
-        }
-
-        // Retorna solo las reservaciones pagadas de un vuelo, que son los pasajeros confirmados
-        public async Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber)
-        {
-            const string sql = """
-                SELECT reservation_id, date, payment_status, user_id, flight_number
-                FROM reservations
-                WHERE flight_number = @flightNumber
-                  AND payment_status = 'paid'
-                ORDER BY date ASC;
-                """;
-
-            var reservations = new List<Reservation>();
-            using var connection = await _connectionFactory.CreateConnectionAsync();
-            using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            AddParam(command, "flightNumber", flightNumber);
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-                reservations.Add(MapRow(reader));
-
-            return reservations;
-        }
-
-        // Busca una reservación por su ID; retorna null si no existe
-        public async Task<Reservation?> GetByIdAsync(int reservationId)
-        {
-            const string sql = """
-                SELECT reservation_id, date, payment_status, user_id, flight_number
-                FROM reservations
-                WHERE reservation_id = @reservationId;
+            const string query = """
+                SELECT reservation_code, date, payment_state, user_id, flight_number 
+                FROM reservations 
+                WHERE reservation_code = @code;
                 """;
 
             using var connection = await _connectionFactory.CreateConnectionAsync();
             using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            AddParam(command, "reservationId", reservationId);
+            command.CommandText = query;
 
-            using var reader = command.ExecuteReader();
+            AddParameter(command, "@code", reservationCode);
+
+            using var reader = await Task.Run(() => command.ExecuteReader());
             return reader.Read() ? MapRow(reader) : null;
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId)
+        {
+            const string query = """
+                SELECT reservation_code, date, payment_state, user_id, flight_number 
+                FROM reservations 
+                WHERE user_id = @userId 
+                ORDER BY date DESC;
+                """;
+
+            var reservations = new List<Reservation>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            AddParameter(command, "@userId", userId);
+
+            using var reader = await Task.Run(() => command.ExecuteReader());
+            while (reader.Read())
+            {
+                reservations.Add(MapRow(reader));
+            }
+
+            return reservations;
         }
     }
 }

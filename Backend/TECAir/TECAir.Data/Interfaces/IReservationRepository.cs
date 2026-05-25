@@ -1,26 +1,35 @@
-// =============================================================================
-// Archivo  : IReservationRepository.cs
-// Capa     : TECAir.Data → Interfaces
-// Propósito: Contrato de acceso a datos para la entidad Reservation.
-//            Para el Issue #29 (apertura de vuelos), el método principal es
-//            GetPaidByFlightNumberAsync que retorna los pasajeros confirmados.
-// =============================================================================
-
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
-    // Contrato que deben cumplir todas las implementaciones del repositorio de reservaciones
+    /// <summary>
+    /// Defines data access operations for managing customer flight bookings.
+    /// </summary>
     public interface IReservationRepository
     {
-        // Retorna todas las reservaciones de un vuelo sin importar su estado de pago
-        Task<IEnumerable<Reservation>> GetByFlightNumberAsync(string flightNumber);
+        /// <summary>
+        /// Registers a new reservation ledger entry and returns the code.
+        /// </summary>
+        Task<string> CreateAsync(Reservation reservation);
 
-        // Retorna solo las reservaciones con payment_status = 'paid' de un vuelo
-        // Es el método central para la apertura de vuelos (pasajeros confirmados)
-        Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber);
+        /// <summary>
+        /// Retrieves a single reservation details matching the unique reference code.
+        /// </summary>
+        Task<Reservation?> GetByCodeAsync(string reservationCode);
 
-        // Busca una reservación por su ID
-        Task<Reservation?> GetByIdAsync(int reservationId);
+        /// <summary>
+        /// Retrieves all historical reservation entries associated with a specific user.
+        /// </summary>
+        Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId);
+
+        /// <summary>
+        /// Updates an existing reservation's payment status or booking date details.
+        /// </summary>
+        Task<bool> UpdateAsync(Reservation reservation);
+
+        /// <summary>
+        /// Cancels a booking by changing its state or removing the transaction record.
+        /// </summary>
+        Task<bool> CancelAsync(string reservationCode);
     }
 }
