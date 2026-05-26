@@ -1,23 +1,26 @@
+// =============================================================================
+// File    : IAirportRepository.cs
+// Layer   : TECAir.Data → Interfaces
+// Purpose : Defines the data access contract for airport records.
+// =============================================================================
+
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
     /// <summary>
-    /// Defines data access operations for managing <see cref="Airport"/> records.
+    /// Defines data access operations for airport records.
     /// </summary>
     public interface IAirportRepository
     {
         /// <summary>
-        /// Retrieves all airports registered in the system to populate origin and destination lists.
+        /// Gets all airports registered in the system.
         /// </summary>
-        /// <returns>A collection of all available airports.</returns>
         Task<IEnumerable<Airport>> GetAllAsync();
 
         /// <summary>
-        /// Finds a specific airport by its unique identifier code.
+        /// Gets an airport by its unique identifier, or returns null when no match exists.
         /// </summary>
-        /// <param name="airportId">The unique IATA code of the airport.</param>
-        /// <returns>The airport profile if found; otherwise, null.</returns>
         Task<Airport?> GetByIdAsync(int airportId);
     }
 }

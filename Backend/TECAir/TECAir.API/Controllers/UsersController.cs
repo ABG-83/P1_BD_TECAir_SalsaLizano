@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : UsersController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for users operations.
+// =============================================================================
+
 using Microsoft.AspNetCore.Mvc;
 using TECAir.Core.DTOs.Users;
 using TECAir.Core.Interfaces;

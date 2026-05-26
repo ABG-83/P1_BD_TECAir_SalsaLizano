@@ -1,34 +1,44 @@
 // =============================================================================
-// Archivo  : CheckIn.cs
-// Capa     : TECAir.Data → Models
-// Propósito: Modelo de dominio que representa el chequeo de un pasajero en un
-//            vuelo. Mapea directamente a la tabla 'check_ins'.
-//            Cada check-in genera el pase de abordar con asiento, puerta y hora.
-//            La restricción UNIQUE sobre reservation_id garantiza que un
-//            pasajero no pueda hacer check-in más de una vez por reservación.
+// File    : CheckIn.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents a passenger check-in record for a flight and its boarding metadata.
 // =============================================================================
 
 namespace TECAir.Data.Models
 {
-    // Representa el registro de check-in de un pasajero para un vuelo específico
+    /// <summary>
+    /// Represents a check-in record for a passenger on a flight.
+    /// </summary>
     public class CheckIn
     {
-        // Identificador único auto-generado por la base de datos
+        /// <summary>
+        /// Gets or sets the unique database identifier for the check-in record.
+        /// </summary>
         public int CheckInId { get; set; }
 
-        // Asiento asignado al pasajero (ej. "12A", "5B")
+        /// <summary>
+        /// Gets or sets the assigned seat for the passenger, such as "12A".
+        /// </summary>
         public string Seat { get; set; } = string.Empty;
 
-        // Puerta de abordaje asignada (ej. "A1", "B3")
+        /// <summary>
+        /// Gets or sets the boarding gate assigned to the passenger.
+        /// </summary>
         public string BoardingGate { get; set; } = string.Empty;
 
-        // Fecha y hora en que se imprimió/generó el pase de abordar
+        /// <summary>
+        /// Gets or sets the timestamp when the boarding pass was generated.
+        /// </summary>
         public DateTime PrintTime { get; set; }
 
-        // Llave foránea a la reservación (UNIQUE: una sola por reservación)
+        /// <summary>
+        /// Gets or sets the reservation locator code that owns the check-in.
+        /// </summary>
         public string ReservationCode { get; set; } = string.Empty;
 
-        // Llave foránea al vuelo al que pertenece este check-in
+        /// <summary>
+        /// Gets or sets the flight number associated with the check-in.
+        /// </summary>
         public string FlightNumber { get; set; } = string.Empty;
     }
 }

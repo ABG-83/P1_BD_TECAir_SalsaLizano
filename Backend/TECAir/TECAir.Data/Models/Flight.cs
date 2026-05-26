@@ -1,17 +1,23 @@
+// =============================================================================
+// File    : Flight.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents a flight schedule and its current operational status within TECAir.
+// =============================================================================
+
 namespace TECAir.Data.Models
 {
     /// <summary>
-    /// Defines the clear operational lifecycle states of a flight.
+    /// Defines the operational lifecycle states of a flight.
     /// </summary>
     public enum FlightStatus
     {
-        /// <summary>The flight is created and scheduled, but boarding has not started.</summary>
+        /// <summary>The flight is scheduled and not yet boarding.</summary>
         Scheduled,
 
         /// <summary>Passengers are currently boarding the aircraft.</summary>
         Boarding,
 
-        /// <summary>The flight is delayed beyond its original departure timeline.</summary>
+        /// <summary>The flight has been delayed beyond its original departure time.</summary>
         Delayed,
 
         /// <summary>The aircraft has departed and is currently in transit.</summary>
@@ -20,7 +26,7 @@ namespace TECAir.Data.Models
         /// <summary>The flight arrived safely at its destination airport.</summary>
         Landed,
 
-        /// <summary>The flight has been officially called off.</summary>
+        /// <summary>The flight has been cancelled.</summary>
         Cancelled
     }
 
@@ -30,7 +36,7 @@ namespace TECAir.Data.Models
     public class Flight
     {
         /// <summary>
-        /// Gets or sets the unique alphanumeric flight number designation (e.g., "TA-204").
+        /// Gets or sets the unique alphanumeric flight number designation.
         /// </summary>
         public string FlightNumber { get; set; } = string.Empty;
 
@@ -50,17 +56,17 @@ namespace TECAir.Data.Models
         public FlightStatus Status { get; set; } = FlightStatus.Scheduled;
 
         /// <summary>
-        /// Gets or sets the foreign key referencing the unique registration plate number of the assigned airplane.
+        /// Gets or sets the registration plate number of the assigned airplane.
         /// </summary>
         public string AirplanePlateNumber { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the foreign key referencing the origin <see cref="Airport"/> identifier.
+        /// Gets or sets the origin airport identifier.
         /// </summary>
         public int OriginAirportId { get; set; }
 
         /// <summary>
-        /// Gets or sets the foreign key referencing the destination <see cref="Airport"/> identifier.
+        /// Gets or sets the destination airport identifier.
         /// </summary>
         public int DestinationAirportId { get; set; }
     }

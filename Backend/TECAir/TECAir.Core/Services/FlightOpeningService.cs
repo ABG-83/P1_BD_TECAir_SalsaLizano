@@ -1,13 +1,7 @@
 // =============================================================================
-// Archivo  : FlightOpeningService.cs
-// Capa     : TECAir.Core → Services
-// Propósito: Implementa la lógica de negocio para la apertura de vuelos.
-//            Coordina tres repositorios: vuelos, reservaciones y maletas.
-//
-//            Reglas de negocio aplicadas:
-//              - Solo se pueden abrir vuelos en estado 'Scheduled'
-//              - Solo los pasajeros con reservación 'paid' aparecen en el manifiesto
-//              - El cargo por maletas sigue la regla: 1ra gratis, 2da $50, 3ra+ $75 c/u
+// File    : FlightOpeningService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for flightopening operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.FlightOpening;
@@ -30,14 +24,14 @@ namespace TECAir.Core.Services
 
         // ── Apertura ───────────────────────────────────────────────────────────
 
-        // Valida el vuelo, lo cambia a 'Boarding' y retorna el manifiesto de pasajeros
+        // Validates the flight, changes it to 'Boarding', and returns the passenger manifest.
         public async Task<FlightManifestDto> OpenFlightAsync(string flightNumber)
         {
             // Verificar que el vuelo exista antes de intentar abrirlo
             var flight = await _flightRepository.GetByFlightNumberAsync(flightNumber)
                 ?? throw new KeyNotFoundException($"No existe el vuelo '{flightNumber}'.");
 
-            // Solo se pueden abrir vuelos que estén en estado Scheduled
+            // Only flights in the Scheduled state can be opened.
             if (flight.Status != FlightStatus.Scheduled)
                 throw new InvalidOperationException(
                     $"El vuelo '{flightNumber}' no puede abrirse porque su estado actual es '{flight.Status}'. " +
@@ -53,7 +47,7 @@ namespace TECAir.Core.Services
 
         // ── Consulta ───────────────────────────────────────────────────────────
 
-        // Retorna el manifiesto sin cambiar el estado, para consulta previa a la apertura
+        // Returns the manifest without changing the state, for a pre-opening review.
         public async Task<FlightManifestDto> GetManifestAsync(string flightNumber)
         {
             var flight = await _flightRepository.GetByFlightNumberAsync(flightNumber)
@@ -62,10 +56,10 @@ namespace TECAir.Core.Services
             return await BuildManifestAsync(flight);
         }
 
-        // ── Métodos privados de apoyo ──────────────────────────────────────────
+        // ── Private helper methods ──────────────────────────────────────────
 
         // Construye el manifiesto iterando sobre las reservaciones pagadas del vuelo
-        // y consultando las maletas de cada una para armar el detalle por pasajero
+        // and checking each baggage item to build the passenger detail.
         private async Task<FlightManifestDto> BuildManifestAsync(Flight flight)
         {
             var paidReservations = await _reservationRepository.GetPaidByFlightNumberAsync(flight.FlightNumber);
@@ -76,7 +70,7 @@ namespace TECAir.Core.Services
                 // Obtener datos del pasajero para mostrar nombre y correo en el manifiesto
                 var user = await _userRepository.GetByIdAsync(reservation.UserId);
 
-                // Contar las maletas registradas para esta reservación
+                // Count the baggage items registered for this reservation.
                 var baggageCount = await _baggageRepository.CountByReservationCodeAsync(reservation.ReservationCode);
 
                 passengers.Add(new PassengerManifestItemDto
@@ -101,14 +95,14 @@ namespace TECAir.Core.Services
             };
         }
 
-        // Calcula el cargo adicional por maletas según la regla de negocio:
-        // 1ra maleta → $0, 2da → $50, 3ra en adelante → $75 cada una
+        // Calculates the additional baggage charge according to the business rule:
+        // 1st baggage → $0, 2nd → $50, 3rd and onward → $75 each.
         private static decimal CalcularCargoPorMaletas(int cantidad)
         {
             if (cantidad <= 1) return 0m;
             if (cantidad == 2) return 50m;
 
-            // Desde la 3ra maleta se cobran $75 por cada una adicional
+            // Starting with the 3rd baggage item, $75 is charged for each additional one.
             return 50m + ((cantidad - 2) * 75m);
         }
     }

@@ -1,11 +1,20 @@
+// =============================================================================
+// File    : User.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents a user account, its role, and profile metadata for TECAir.
+// =============================================================================
+
 namespace TECAir.Data.Models
 {
     /// <summary>
-    /// Defines system access levels for user accounts.
+    /// Defines the access levels available for TECAir user accounts.
     /// </summary>
     public enum UserRole
     {
+        /// <summary>Administrative access for staff operations.</summary>
         ADMIN,
+
+        /// <summary>Customer access for booking and travel workflows.</summary>
         CLIENT
     }
 
@@ -15,26 +24,42 @@ namespace TECAir.Data.Models
     public class User
     {
         /// <summary>
-        /// Unique identifier and primary key for the database record.
+        /// Gets or sets the unique database identifier for the user.
         /// </summary>
         public int UserId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user's full name.
+        /// </summary>
         public string FullName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the user's email address.
+        /// </summary>
         public string Email { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the user's phone number.
+        /// </summary>
         public string PhoneNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the security role assigned to the user.
+        /// </summary>
         public UserRole Role { get; set; } = UserRole.CLIENT;
 
         /// <summary>
-        /// Total frequent flyer miles accumulated by the customer.
+        /// Gets or sets the total frequent flyer miles accumulated by the user.
         /// </summary>
         public float Miles { get; set; } = 0;
 
         /// <summary>
-        /// Institutional student or staff identification number issued by the university.
+        /// Gets or sets the optional institutional identifier for students or staff.
         /// </summary>
         public string? CollegeIdNumber { get; set; } = string.Empty;
 
         /// <summary>
-        /// Institutional/university affiliation.
+        /// Gets or sets the optional institutional or university affiliation.
         /// </summary>
         public string? College { get; set; } = string.Empty;
     }

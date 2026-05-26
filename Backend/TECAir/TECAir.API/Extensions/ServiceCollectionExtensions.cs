@@ -1,11 +1,8 @@
 // =============================================================================
-// Archivo  : ServiceCollectionExtensions.cs
-// Capa     : TECAir.API → Extensions
-// Propósito: Registra todas las capas del sistema en el contenedor de DI.
-//            Cada vez que se agrega un repositorio o servicio nuevo al proyecto,
-//            se registra aquí para que el DI container sepa qué clase instanciar.
+// File    : ServiceCollectionExtensions.cs
+// Layer   : TECAir.API → Extensions
+// Purpose : Registers dependency injection and application configuration.
 // =============================================================================
-
 
 using TECAir.Core.Interfaces;
 using TECAir.Core.Services;

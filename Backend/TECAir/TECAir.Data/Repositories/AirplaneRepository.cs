@@ -1,10 +1,7 @@
 // =============================================================================
-// Archivo  : AirplaneRepository.cs
-// Capa     : TECAir.Data → Repositories
-// Propósito: Implementación de IAirplaneRepository usando ADO.NET puro.
-//            Ejecuta queries contra la tabla AVION en PostgreSQL.
-//            Sigue el mismo patrón que AirportRepository y UserRepository:
-//            helper MapRow + ADO.NET manual (sin Dapper).
+// File    : AirplaneRepository.cs
+// Layer   : TECAir.Data → Repositories
+// Purpose : Implements airplane persistence logic with ADO.NET.
 // =============================================================================
 
 using System.Data;
@@ -14,21 +11,26 @@ using TECAir.Data.Models;
 
 namespace TECAir.Data.Repositories
 {
+    /// <summary>
+    /// SQL-backed implementation of <see cref="IAirplaneRepository"/> using native ADO.NET.
+    /// </summary>
     public class AirplaneRepository(IDbConnectionFactory connectionFactory) : IAirplaneRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
-        // ── Helpers ────────────────────────────────────────────────────────────
-
-        // Mapea una fila del DataReader a un objeto Airplane
+        /// <summary>
+        /// Maps a data reader row into an <see cref="Airplane"/> domain object.
+        /// </summary>
         private static Airplane MapRow(IDataReader r) => new()
         {
-            PlateNumber       = r.GetString(r.GetOrdinal("plate_number")),
+            PlateNumber = r.GetString(r.GetOrdinal("plate_number")),
             PassengerCapacity = r.GetInt32(r.GetOrdinal("passenger_capacity")),
-            SeatCount         = r.GetInt32(r.GetOrdinal("seat_count"))
+            SeatCount = r.GetInt32(r.GetOrdinal("seat_count"))
         };
 
-        // Crea y agrega un parámetro al comando
+        /// <summary>
+        /// Creates and adds a command parameter.
+        /// </summary>
         private static void AddParam(IDbCommand cmd, string name, object value)
         {
             var p = cmd.CreateParameter();
@@ -37,8 +39,7 @@ namespace TECAir.Data.Repositories
             cmd.Parameters.Add(p);
         }
 
-        // ── Queries ────────────────────────────────────────────────────────────
-
+        /// <inheritdoc />
         public async Task<IEnumerable<Airplane>> GetAllAsync()
         {
             const string sql = """
@@ -59,6 +60,7 @@ namespace TECAir.Data.Repositories
             return airplanes;
         }
 
+        /// <inheritdoc />
         public async Task<Airplane?> GetByPlateNumberAsync(string plateNumber)
         {
             const string sql = """

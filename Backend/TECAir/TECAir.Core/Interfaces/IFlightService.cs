@@ -1,12 +1,7 @@
 // =============================================================================
-// Archivo  : IFlightService.cs
-// Capa     : TECAir.Core → Interfaces
-// Propósito: Contrato de la lógica de negocio para vuelos.
-//
-//            Scope del Issue #14 (gestión de vuelos):
-//              - Registrar un vuelo con ruta completa (origen, escalas, destino)
-//              - Consultar todos los vuelos
-//              - Consultar un vuelo por número
+// File    : IFlightService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for flight operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.Flights;
@@ -20,14 +15,14 @@ namespace TECAir.Core.Interfaces
     public interface IFlightService
     {
         
-        // Retorna todos los vuelos con su ruta enriquecida (nombres de aeropuertos + escalas)
+        // Returns all flights with their enriched route (airport names + stopovers).
         Task<IEnumerable<FlightResponseDto>> GetAllFlightsAsync();
  
-        // Retorna un vuelo específico. Retorna null si no existe.
+        // Returns a specific flight. Returns null when it does not exist.
         Task<FlightResponseDto?> GetFlightByNumberAsync(string flightNumber);
  
-        // Registra un vuelo nuevo con su ruta completa.
-        // Lanza InvalidOperationException si el avión o algún aeropuerto no existe.
+        // Registers a new flight with its full route.
+        // Throws InvalidOperationException when the airplane or an airport does not exist.
         Task CreateFlightAsync(CreateFlightDto dto);
 
         /// <summary>

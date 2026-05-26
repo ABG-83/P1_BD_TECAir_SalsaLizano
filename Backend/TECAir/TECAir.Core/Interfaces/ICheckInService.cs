@@ -1,14 +1,7 @@
 // =============================================================================
-// Archivo  : ICheckInService.cs
-// Capa     : TECAir.Core → Interfaces
-// Propósito: Contrato de la lógica de negocio para el chequeo de pasajeros.
-//
-//            Scope del Issue #15 (chequeo de pasajeros):
-//              - Realizar el check-in de un pasajero (validar reservación,
-//                asignar asiento y registrar el pase de abordar)
-//              - Consultar un check-in por su ID
-//              - Obtener el pase de abordar completo de un check-in
-//              - Listar los check-ins de un vuelo
+// File    : ICheckInService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for checkn operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.BoardingPass;
@@ -16,29 +9,29 @@ using TECAir.Core.DTOs.CheckIn;
 
 namespace TECAir.Core.Interfaces
 {
-    // Contrato que define las operaciones de negocio para el check-in de pasajeros
+    // Contract that defines the business operations for passenger check-in.
     public interface ICheckInService
     {
-        // Realiza el check-in de un pasajero dado su reservación, asiento y puerta.
+        // Performs passenger check-in for the provided reservation, seat, and boarding gate.
         // Lanza InvalidOperationException si:
-        //   - La reservación no existe o no está pagada
-        //   - El vuelo no está en estado 'Boarding'
-        //   - El pasajero ya tiene check-in en esa reservación
-        //   - El asiento ya está ocupado en ese vuelo
-        // Retorna el DTO de confirmación con los datos del check-in creado.
+        //   - The reservation does not exist or is not paid.
+        //   - The flight is not in the 'Boarding' state.
+        //   - The passenger already has a check-in for this reservation.
+        //   - The seat is already occupied on that flight.
+        // Returns the confirmation DTO with the created check-in data.
         Task<CheckInResponseDto> CheckInPassengerAsync(CheckInDto dto);
 
-        // Busca un check-in por su ID primario.
-        // Retorna null si no existe — el controlador lo convierte en 404.
+        // Finds a check-in by its primary ID.
+        // Returns null when it does not exist; the controller converts it into a 404 response.
         Task<CheckInResponseDto?> GetByIdAsync(int checkInId);
 
         // Genera el pase de abordar completo para un check-in existente.
-        // Enriquece los datos del check-in con información del vuelo y el pasajero.
-        // Retorna null si el check-in no existe.
+        // Enriches the check-in data with flight and passenger information.
+        // Returns null when the check-in does not exist.
         Task<BoardingPassDto?> GetBoardingPassAsync(int checkInId);
 
-        // Retorna todos los check-ins registrados para un vuelo determinado.
-        // Útil para que el funcionario vea quiénes ya han hecho check-in.
+        // Returns all check-ins recorded for a specific flight.
+        // Useful for the staff member to see who has already checked in.
         Task<IEnumerable<CheckInResponseDto>> GetByFlightNumberAsync(string flightNumber);
     }
 }

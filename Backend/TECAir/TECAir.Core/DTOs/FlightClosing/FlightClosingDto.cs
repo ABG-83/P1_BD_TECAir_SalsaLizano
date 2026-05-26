@@ -1,61 +1,59 @@
 // =============================================================================
-// Archivo  : FlightClosingDto.cs
-// Capa     : TECAir.Core → DTOs/FlightClosing
-// Propósito: Define el JSON que retorna el endpoint de cierre de vuelo.
-//            Contiene la lista oficial y final de pasajeros que efectivamente
-//            viajarán, basada en quiénes completaron el check-in antes del cierre.
+// File    : FlightClosingDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 namespace TECAir.Core.DTOs.FlightClosing
 {
-    // Respuesta completa del cierre de un vuelo con la lista oficial de pasajeros
+    // Full response for closing a flight with the official passenger list.
     public class FlightClosingDto
     {
-        // Número de vuelo cerrado
+        // Closed flight number
         public string FlightNumber { get; set; } = string.Empty;
 
-        // Nuevo estado del vuelo después del cierre (siempre 'InAir')
+        // New flight status after closure (always 'InAir')
         public string Status { get; set; } = string.Empty;
 
-        // Hora de salida programada del vuelo
+        // Scheduled departure time of the flight.
         public DateTime DepartureTime { get; set; }
 
-        // Hora de llegada programada del vuelo
+        // Scheduled arrival time of the flight.
         public DateTime ArrivalTime { get; set; }
 
-        // Total oficial de pasajeros que viajarán (solo los que hicieron check-in)
+        // Official total of passengers who will travel (only those who checked in)
         public int TotalPassengers { get; set; }
 
-        // Total de maletas de todos los pasajeros con check-in
+        // Total baggage count for all passengers with check-in
         public int TotalBaggages { get; set; }
 
-        // Lista detallada de cada pasajero con check-in confirmado
+        // Detailed list of every passenger with confirmed check-in.
         public List<CheckedInPassengerDto> Passengers { get; set; } = [];
     }
 
-    // Representa a un pasajero con check-in dentro de la lista oficial del vuelo
+    // Represents a passenger with check-in inside the official flight list.
     public class CheckedInPassengerDto
     {
-        // ID del check-in del pasajero
+        // Passenger check-in ID.
         public int CheckInId { get; set; }
 
-        // Asiento asignado al pasajero (ej. "12A")
+        // Assigned seat for the passenger (for example, "12A").
         public string Seat { get; set; } = string.Empty;
 
-        // Puerta de abordaje asignada (ej. "A1")
+        // Assigned boarding gate (for example, "A1").
         public string BoardingGate { get; set; } = string.Empty;
 
-        // Nombre completo del pasajero
+        // Full name of the passenger.
         public string FullName { get; set; } = string.Empty;
 
-        // Correo electrónico de contacto del pasajero
+        // Contact email address of the passenger.
         public string Email { get; set; } = string.Empty;
 
-        // Cantidad de maletas registradas para este pasajero
+        // Number of baggage items registered for this passenger.
         public int BaggageCount { get; set; }
 
-        // Cargo adicional por maletas extra según la regla de negocio:
-        // 1ra gratis, 2da $50, 3ra en adelante $75 c/u
+        // Additional charge for extra baggage items according to the business rule:
+        // 1st is free, 2nd is $50, 3rd and onward is $75 each.
         public decimal BaggageSurcharge { get; set; }
     }
 }

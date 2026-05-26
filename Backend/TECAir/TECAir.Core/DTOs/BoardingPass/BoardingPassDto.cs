@@ -1,25 +1,17 @@
 // =============================================================================
-// Archivo  : BoardingPassDto.cs
-// Capa     : TECAir.Core → DTOs → BoardingPass
-// Propósito: DTO que representa el pase de abordar de un pasajero.
-//            Contiene todos los campos que la especificación indica deben
-//            aparecer en el pase: puerta de abordaje, hora de salida,
-//            asiento y número de vuelo.
-//
-//            Este DTO es el que se usa para:
-//              - Mostrar el pase en pantalla (vista web/móvil)
-//              - Enviar el pase por correo electrónico
-//              - Enviarlo a una impresora o dispositivo móvil
+// File    : BoardingPassDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 namespace TECAir.Core.DTOs.BoardingPass
 {
-    // Toda la información que aparece impresa en el pase de abordar
+    // All information printed on the boarding pass
     public class BoardingPassDto
     {
         // ── Datos del vuelo ────────────────────────────────────────────────────
 
-        // Número de vuelo (ej. "TA-003")
+        // Flight number (for example, "TA-003")
         public string FlightNumber { get; set; } = string.Empty;
 
         // Aeropuerto de origen del vuelo (nombre completo)
@@ -28,7 +20,7 @@ namespace TECAir.Core.DTOs.BoardingPass
         // Aeropuerto de destino del vuelo (nombre completo)
         public string DestinationAirport { get; set; } = string.Empty;
 
-        // Fecha y hora de salida del vuelo — campo obligatorio según la especificación
+        // Departure date and time of the flight — required field according to the specification
         public DateTime DepartureTime { get; set; }
 
         // Fecha y hora estimada de llegada
@@ -36,24 +28,24 @@ namespace TECAir.Core.DTOs.BoardingPass
 
         // ── Datos del pasajero ─────────────────────────────────────────────────
 
-        // Nombre completo del pasajero tal como está registrado en el sistema
+        // Full name of the passenger as stored in the system
         public string PassengerName { get; set; } = string.Empty;
 
-        // Correo electrónico del pasajero (útil para envío digital del pase)
+        // Passenger email address (useful for digital boarding pass delivery)
         public string PassengerEmail { get; set; } = string.Empty;
 
         // ── Datos del check-in ─────────────────────────────────────────────────
 
-        // Asiento asignado al pasajero — campo obligatorio según la especificación
+        // Assigned seat for the passenger — required field according to the specification
         public string Seat { get; set; } = string.Empty;
 
-        // Puerta de abordaje — campo obligatorio según la especificación
+        // Boarding gate — required field according to the specification
         public string BoardingGate { get; set; } = string.Empty;
 
-        // Momento en que se generó/imprimió el pase de abordar
+        // Timestamp when the boarding pass was generated or printed
         public DateTime PrintTime { get; set; }
 
-        // ID del check-in que originó este pase (útil para trazabilidad)
+        // Check-in ID that generated this boarding pass (useful for traceability)
         public int CheckInId { get; set; }
     }
 }

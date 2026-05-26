@@ -1,14 +1,7 @@
 // =============================================================================
-// Archivo  : PromotionService.cs
-// Capa     : TECAir.Core → Services
-// Propósito: Implementa la lógica de negocio para la gestión de promociones.
-//            Coordina IPromotionRepository e IAirportRepository para enriquecer
-//            las respuestas con nombres de aeropuertos y validar reglas del dominio.
-//
-//            Reglas de negocio aplicadas:
-//              - StartDate debe ser anterior a EndDate
-//              - Origen y destino deben ser aeropuertos distintos y existentes en la BD
-//              - No se puede editar ni eliminar una promoción que no existe
+// File    : PromotionService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for promotion operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.Promotions;
@@ -27,7 +20,7 @@ namespace TECAir.Core.Services
 
         // ── Consultas ──────────────────────────────────────────────────────────
 
-        // Obtiene todas las promociones y enriquece cada una con los nombres de sus aeropuertos
+        // Gets all promotions and enriches each one with the names of its airports.
         public async Task<IEnumerable<PromotionResponseDto>> GetAllPromotionsAsync()
         {
             var promotions = await _promotionRepository.GetAllAsync();
@@ -39,7 +32,7 @@ namespace TECAir.Core.Services
             return result;
         }
 
-        // Obtiene solo las activas y las enriquece con datos de aeropuertos
+        // Gets only the active promotions and enriches them with airport data.
         public async Task<IEnumerable<PromotionResponseDto>> GetActivePromotionsAsync()
         {
             var promotions = await _promotionRepository.GetActiveAsync();
@@ -51,7 +44,7 @@ namespace TECAir.Core.Services
             return result;
         }
 
-        // Busca una promoción por ID; el controlador convierte null en 404
+        // Finds a promotion by ID; the controller converts null into a 404 response.
         public async Task<PromotionResponseDto?> GetPromotionByIdAsync(int promotionId)
         {
             var promotion = await _promotionRepository.GetByIdAsync(promotionId);
@@ -60,9 +53,9 @@ namespace TECAir.Core.Services
             return await BuildResponseDtoAsync(promotion);
         }
 
-        // ── Creación ───────────────────────────────────────────────────────────
+        // ── Creation ───────────────────────────────────────────────────────────
 
-        // Valida aeropuertos y fechas antes de insertar; toda promoción nueva inicia activa
+        // Validates airports and dates before inserting; every new promotion starts active.
         public async Task<int> CreatePromotionAsync(CreatePromotionDto dto)
         {
             await ValidarAeropuertosAsync(dto.OriginAirportId, dto.DestinationAirportId);
@@ -82,9 +75,9 @@ namespace TECAir.Core.Services
             return await _promotionRepository.CreateAsync(promotion);
         }
 
-        // ── Edición ────────────────────────────────────────────────────────────
+        // ── Update ────────────────────────────────────────────────────────────
 
-        // Verifica que la promoción exista, valida reglas y aplica los cambios
+        // Verifies that the promotion exists, validates the rules, and applies the changes.
         public async Task UpdatePromotionAsync(int promotionId, UpdatePromotionDto dto)
         {
             // Lanza KeyNotFoundException si no existe; el middleware lo convierte en 404
@@ -106,9 +99,9 @@ namespace TECAir.Core.Services
             await _promotionRepository.UpdateAsync(existing);
         }
 
-        // ── Eliminación ────────────────────────────────────────────────────────
+        // ── Deletion ────────────────────────────────────────────────────────
 
-        // Verifica que la promoción exista antes de intentar eliminarla
+        // Verifies that the promotion exists before attempting to delete it.
         public async Task DeletePromotionAsync(int promotionId)
         {
             var existing = await _promotionRepository.GetByIdAsync(promotionId)
@@ -117,7 +110,7 @@ namespace TECAir.Core.Services
             await _promotionRepository.DeleteAsync(existing.PromotionId);
         }
 
-        // ── Métodos privados de apoyo ──────────────────────────────────────────
+        // ── Private helper methods ──────────────────────────────────────────
 
         // Construye el DTO de respuesta resolviendo los nombres de origen y destino desde la BD
         private async Task<PromotionResponseDto> BuildResponseDtoAsync(Promotion promotion)
@@ -148,7 +141,7 @@ namespace TECAir.Core.Services
             };
         }
 
-        // Verifica que ambos aeropuertos existan en la BD y que sean distintos entre sí
+        // Verifies that both airports exist in the database and that they are different from each other.
         private async Task ValidarAeropuertosAsync(int originId, int destinationId)
         {
             if (originId == destinationId)

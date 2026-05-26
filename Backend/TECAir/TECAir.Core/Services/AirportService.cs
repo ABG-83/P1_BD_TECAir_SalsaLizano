@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : AirportService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for airport operations.
+// =============================================================================
+
 using TECAir.Core.Interfaces;
 using TECAir.Data.Interfaces;
 using TECAir.Data.Models;

@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : IAirportService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for airport operations.
+// =============================================================================
+
 using TECAir.Data.Models;
 
 namespace TECAir.Core.Interfaces

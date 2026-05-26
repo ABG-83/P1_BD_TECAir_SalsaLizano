@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : IPaymentService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for payment operations.
+// =============================================================================
+
 using TECAir.Core.DTOs.Payments;
 
 namespace TECAir.Core.Interfaces

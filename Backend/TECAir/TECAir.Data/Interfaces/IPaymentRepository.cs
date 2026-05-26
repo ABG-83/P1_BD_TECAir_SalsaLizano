@@ -1,24 +1,30 @@
+// =============================================================================
+// File    : IPaymentRepository.cs
+// Layer   : TECAir.Data → Interfaces
+// Purpose : Defines the data access contract for payment records.
+// =============================================================================
+
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
     /// <summary>
-    /// Provides low-level database structural capabilities to read and write payment traces.
+    /// Defines data access operations for payment records.
     /// </summary>
     public interface IPaymentRepository
     {
         /// <summary>
-        /// Commits an immutable ledger record tracking an approved payment directly into storage.
+        /// Creates a payment record and returns the generated identifier.
         /// </summary>
         Task<int> CreateAsync(Payment payment);
 
         /// <summary>
-        /// Pulls a singular financial log matching its key index parameter.
+        /// Gets a payment record by its identifier, or returns null when no match exists.
         /// </summary>
         Task<Payment?> GetByIdAsync(int paymentId);
 
         /// <summary>
-        /// Gathers all payment tracking documents linked to an isolated reservation code lookup token.
+        /// Gets all payment records associated with a reservation code.
         /// </summary>
         Task<IEnumerable<Payment>> GetByReservationCodeAsync(string reservationCode);
     }

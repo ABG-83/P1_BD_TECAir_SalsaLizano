@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : ReservationsController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for reservations operations.
+// =============================================================================
+
 using Microsoft.AspNetCore.Mvc;
 using TECAir.Core.DTOs.Reservations;
 using TECAir.Core.Interfaces;

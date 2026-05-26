@@ -1,24 +1,29 @@
 // =============================================================================
-// Archivo  : FlightRoute.cs
-// Capa     : TECAir.Data → Models
-// Propósito: Modelo que representa una escala intermedia de un vuelo.
-//            Mapea la tabla VUELO_ESCALA de la base de datos.
-//            La PK es compuesta: (flight_number, airport_id).
-//            Permite registrar la ruta completa de un vuelo:
-//            origen → escala 1 → escala 2 → ... → destino.
+// File    : FlightRoute.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents an intermediate stop in a flight itinerary.
 // =============================================================================
 
 namespace TECAir.Data.Models
 {
+    /// <summary>
+    /// Represents an intermediate stop in a flight itinerary.
+    /// </summary>
     public class FlightRoute
     {
-        // Número del vuelo al que pertenece esta escala. FK → flights
+        /// <summary>
+        /// Gets or sets the flight number that owns the stop.
+        /// </summary>
         public string FlightNumber { get; set; } = string.Empty;
 
-        // ID del aeropuerto de escala. FK → airports
+        /// <summary>
+        /// Gets or sets the airport identifier for the stop.
+        /// </summary>
         public int AirportId { get; set; }
 
-        // Posición de esta escala en la ruta: 1 = primera escala, 2 = segunda, etc.
+        /// <summary>
+        /// Gets or sets the order of the stop in the itinerary.
+        /// </summary>
         public int StopOrder { get; set; }
     }
 }

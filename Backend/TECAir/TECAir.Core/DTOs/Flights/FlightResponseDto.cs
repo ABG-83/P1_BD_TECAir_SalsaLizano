@@ -1,10 +1,7 @@
 // =============================================================================
-// Archivo  : FlightResponseDto.cs
-// Capa     : TECAir.Core → DTOs/Flights
-// Propósito: Define el JSON que la API retorna al consultar un vuelo.
-//            A diferencia del modelo Flight (que solo tiene IDs), este DTO
-//            incluye nombres de aeropuertos y escalas enriquecidas para que
-//            el frontend no necesite hacer llamadas adicionales.
+// File    : FlightResponseDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 namespace TECAir.Core.DTOs.Flights
@@ -17,20 +14,20 @@ namespace TECAir.Core.DTOs.Flights
         public string Status { get; set; } = string.Empty;
         public string AirplanePlateNumber { get; set; } = string.Empty;
 
-        // Capacidad del avión asignado (útil para el frontend)
+        // Assigned aircraft capacity (useful for the frontend).
         public int PassengerCapacity { get; set; }
 
-        // Aeropuerto de origen con nombre y ubicación
+        // Origin airport with name and location.
         public AirportSummaryDto Origin { get; set; } = new();
 
-        // Aeropuerto de destino con nombre y ubicación
+        // Destination airport with name and location.
         public AirportSummaryDto Destination { get; set; } = new();
 
-        // Escalas intermedias ordenadas (vacío si vuelo directo)
+        // Ordered intermediate stopovers (empty for a direct flight).
         public List<FlightStopDto> Stops { get; set; } = new();
     }
 
-    // Datos resumidos de un aeropuerto dentro de la respuesta de vuelo
+    // Brief airport data included in the flight response.
     public class AirportSummaryDto
     {
         public int AirportId { get; set; }
@@ -38,10 +35,10 @@ namespace TECAir.Core.DTOs.Flights
         public string Location { get; set; } = string.Empty;
     }
 
-    // Datos de una escala intermedia dentro de la respuesta de vuelo
+    // Intermediate stop data included in the flight response.
     public class FlightStopDto
     {
-        public int Order { get; set; }       // Posición en la ruta (1, 2, 3...)
+        public int Order { get; set; }       // Position in the route (1, 2, 3...)
         public int AirportId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;

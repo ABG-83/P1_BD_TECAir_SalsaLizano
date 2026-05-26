@@ -1,24 +1,22 @@
 // =============================================================================
-// Archivo  : IFlightClosingService.cs
-// Capa     : TECAir.Core → Interfaces
-// Propósito: Contrato de lógica de negocio para el cierre de vuelos (Issue #30).
-//            Separa la funcionalidad de cierre del servicio general de vuelos
-//            porque genera la lista oficial basada en check-ins, no en reservaciones.
+// File    : IFlightClosingService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for flightclosing operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.FlightClosing;
 
 namespace TECAir.Core.Interfaces
 {
-    // Contrato para la operación de cierre de vuelos del aeropuerto
+    // Contract for the airport flight-closing operation.
     public interface IFlightClosingService
     {
-        // Cierra un vuelo cambiando su estado a 'InAir' y retorna la lista oficial
-        // de pasajeros que tienen check-in confirmado con su conteo de maletas
+        // Closes a flight by changing its status to 'InAir' and returns the official
+        // list for passengers who have confirmed check-in with their baggage count.
         Task<FlightClosingDto> CloseFlightAsync(string flightNumber);
 
-        // Retorna la lista oficial de pasajeros con check-in sin cambiar el estado del vuelo
-        // Útil para previsualizar la lista final antes de confirmar el cierre
+        // Returns the official passenger list with check-in without changing the flight status.
+        // Useful for previewing the final list before confirming the closure.
         Task<FlightClosingDto> GetFinalListAsync(string flightNumber);
     }
 }
