@@ -1,16 +1,7 @@
 // =============================================================================
-// Archivo  : CheckInController.cs
-// Capa     : TECAir.API → Controllers
-// Propósito: Endpoints REST del Issue #15 — API de chequeo de pasajeros.
-//            Permite a los funcionarios del aeropuerto registrar el check-in
-//            de un pasajero, asignarle asiento y obtener el pase de abordar.
-//            No contiene lógica de negocio ni SQL; delega al servicio.
-//
-//            Endpoints expuestos:
-//              POST /api/checkin                          → realizar check-in
-//              GET  /api/checkin/{id}                     → consultar check-in por ID
-//              GET  /api/checkin/{id}/boarding-pass       → obtener pase de abordar
-//              GET  /api/checkin/flight/{flightNumber}    → check-ins de un vuelo
+// File    : CheckInController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for checkin operations.
 // =============================================================================
 
 using Microsoft.AspNetCore.Mvc;
@@ -27,9 +18,9 @@ namespace TECAir.API.Controllers
         private readonly ICheckInService _checkInService = checkInService;
 
         // POST /api/checkin
-        // Registra el check-in de un pasajero: valida la reservación, asigna el
-        // asiento solicitado y genera el registro del pase de abordar.
-        // Body de ejemplo:
+        // Registers a passenger check-in: validates the reservation and assigns the
+        // requested seat and generates the boarding pass record.
+        // Example body:
         // {
         //   "reservationId": 1,
         //   "seat": "12A",
@@ -41,10 +32,10 @@ namespace TECAir.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> CheckIn([FromBody] CheckInDto dto)
         {
-            // [ApiController] valida los [Required] del DTO antes de llegar aquí
+            // [ApiController] validates the DTO [Required] fields before the action executes.
             var result = await _checkInService.CheckInPassengerAsync(dto);
 
-            // 201 Created apuntando al check-in recién creado
+            // 201 Created pointing to the newly created check-in record.
             return CreatedAtAction(
                 actionName: nameof(GetById),
                 routeValues: new { id = result.CheckInId },
@@ -53,8 +44,8 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/checkin/{id}
-        // Retorna los datos de un check-in específico por su ID.
-        // Devuelve 404 si el check-in no existe.
+        // Returns the details of a specific check-in by its ID.
+        // Returns 404 when the check-in does not exist.
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(CheckInResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -69,10 +60,10 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/checkin/{id}/boarding-pass
-        // Genera y retorna el pase de abordar completo para un check-in existente.
-        // El pase incluye: puerta de abordaje, hora de salida, asiento y número de vuelo
-        // (campos obligatorios según la especificación del proyecto).
-        // Devuelve 404 si el check-in no existe.
+        // Generates and returns the complete boarding pass for an existing check-in.
+        // The boarding pass includes the boarding gate, departure time, seat, and flight number.
+        // (required fields according to the project specification).
+        // Returns 404 when the check-in does not exist.
         [HttpGet("{id:int}/boarding-pass")]
         [ProducesResponseType(typeof(BoardingPassDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -87,8 +78,8 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/checkin/flight/{flightNumber}
-        // Retorna todos los check-ins registrados para un vuelo.
-        // Permite al funcionario ver en tiempo real qué pasajeros ya abordaron.
+        // Returns all check-ins recorded for a flight.
+        // Allows the staff member to see in real time which passengers have boarded.
         [HttpGet("flight/{flightNumber}")]
         [ProducesResponseType(typeof(IEnumerable<CheckInResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetByFlight(string flightNumber)

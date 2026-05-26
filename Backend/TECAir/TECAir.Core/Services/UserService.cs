@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : UserService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for user operations.
+// =============================================================================
+
 using TECAir.Core.DTOs.Users;
 using TECAir.Core.Interfaces;
 using TECAir.Data.Interfaces;

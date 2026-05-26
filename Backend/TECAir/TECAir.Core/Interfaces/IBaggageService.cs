@@ -1,7 +1,7 @@
 // =============================================================================
-// Archivo  : IBaggageService.cs
-// Capa     : TECAir.Core → Interfaces
-// Propósito: Contrato de lógica de negocio para el Issue #16 — API de maletas.
+// File    : IBaggageService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for baggage operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.Baggage;
@@ -10,13 +10,13 @@ namespace TECAir.Core.Interfaces
 {
     public interface IBaggageService
     {
-        // Valida el check-in del pasajero, calcula el cobro adicional y registra la maleta
+        // Validates passenger check-in, calculates the additional charge, and registers the baggage item.
         Task<BaggageResponseDto> AddBaggageAsync(BaggageDto dTO);
 
-        // Retorna todas las maletas de una reservación con su desglose de cobros
+        // Returns all baggage items for a reservation with their charge breakdown.
         Task<IEnumerable<BaggageResponseDto>> GetByReservationCodeAsync(string reservationCode);
 
-        // Busca una maleta específica por su ID; retorna null si no existe
+        // Finds a specific baggage item by its ID; returns null when it does not exist.
         Task<BaggageResponseDto?> GetByIdAsync(int baggageId);
     }
 }

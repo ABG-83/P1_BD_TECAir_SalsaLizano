@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : AirportsController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for airports operations.
+// =============================================================================
+
 using Microsoft.AspNetCore.Mvc;
 using TECAir.Core.Interfaces;
 using TECAir.Data.Models;

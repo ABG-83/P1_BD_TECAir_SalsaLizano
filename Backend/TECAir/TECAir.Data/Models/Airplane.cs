@@ -1,23 +1,29 @@
 // =============================================================================
-// Archivo  : Airplane.cs
-// Capa     : TECAir.Data → Models
-// Propósito: Modelo que representa un avión de la flota de TECAir.
-//            Mapea la tabla AVION de la base de datos.
-//            Se usa para validar que el avión asignado a un vuelo exista
-//            y para conocer la capacidad máxima de pasajeros.
+// File    : Airplane.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents an airplane in the TECAir fleet and stores its capacity metadata.
 // =============================================================================
 
 namespace TECAir.Data.Models
 {
+    /// <summary>
+    /// Represents an airplane in the TECAir fleet.
+    /// </summary>
     public class Airplane
     {
-        // Matrícula única del avión, clave primaria en la BD. Ej: "TEC-001"
+        /// <summary>
+        /// Gets or sets the unique registration plate number of the airplane.
+        /// </summary>
         public string PlateNumber { get; set; } = string.Empty;
 
-        // Número máximo de pasajeros que puede transportar
+        /// <summary>
+        /// Gets or sets the total passenger capacity configured for the airplane.
+        /// </summary>
         public int PassengerCapacity { get; set; }
 
-        // Número total de asientos físicos del avión
+        /// <summary>
+        /// Gets or sets the total number of physical seats available on the airplane.
+        /// </summary>
         public int SeatCount { get; set; }
     }
 }

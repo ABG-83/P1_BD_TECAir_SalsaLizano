@@ -1,17 +1,7 @@
 // =============================================================================
-// Archivo  : PromotionsController.cs
-// Capa     : TECAir.API → Controllers
-// Propósito: Endpoints REST del Issue #13 — API de gestión de promociones.
-//            Expone operaciones CRUD sobre promociones de precio entre aeropuertos.
-//            No contiene lógica de negocio ni SQL; delega completamente al servicio.
-//
-//            Endpoints expuestos:
-//              GET    /api/promotions          → todas las promociones (admin)
-//              GET    /api/promotions/active   → solo promociones activas (cliente)
-//              GET    /api/promotions/{id}     → una promoción por ID
-//              POST   /api/promotions          → registrar nueva promoción
-//              PUT    /api/promotions/{id}     → editar promoción existente
-//              DELETE /api/promotions/{id}     → eliminar promoción
+// File    : PromotionsController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for promotions operations.
 // =============================================================================
 
 using Microsoft.AspNetCore.Mvc;
@@ -26,7 +16,7 @@ namespace TECAir.API.Controllers
     {
         private readonly IPromotionService _promotionService = promotionService;
 
-        // Retorna todas las promociones (activas e inactivas) para la vista de administrador
+        // Returns all promotions, active and inactive, for the admin view.
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<PromotionResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
@@ -35,7 +25,7 @@ namespace TECAir.API.Controllers
             return Ok(promotions);
         }
 
-        // Retorna solo las promociones activas para el área de promociones de la vista cliente
+        // Returns only active promotions for the client promotions area.
         [HttpGet("active")]
         [ProducesResponseType(typeof(IEnumerable<PromotionResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetActive()
@@ -44,7 +34,7 @@ namespace TECAir.API.Controllers
             return Ok(promotions);
         }
 
-        // Busca una promoción por ID; retorna 404 si no existe
+        // Finds a promotion by ID; returns 404 when it does not exist.
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(PromotionResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -58,13 +48,13 @@ namespace TECAir.API.Controllers
             return Ok(promotion);
         }
 
-        // Registra una nueva promoción; retorna 201 con la ubicación del recurso creado
-        // Body de ejemplo:
+        // Registers a new promotion; returns 201 with the created resource location.
+        // Example body:
         // {
         //   "price": 199.99,
         //   "startDate": "2026-06-01",
         //   "endDate": "2026-08-31",
-        //   "image": "img/promo_sjo_mia.jpg",   ← opcional, puede omitirse
+        //   "image": "img/promo_sjo_mia.jpg",   ← optional, can be omitted
         //   "originAirportId": 1,
         //   "destinationAirportId": 8
         // }
@@ -73,7 +63,7 @@ namespace TECAir.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreatePromotionDto dto)
         {
-            // [ApiController] valida los [Required] del DTO antes de llegar aquí
+            // [ApiController] validates the DTO [Required] fields before the action executes.
             var newId = await _promotionService.CreatePromotionAsync(dto);
 
             return CreatedAtAction(
@@ -83,7 +73,7 @@ namespace TECAir.API.Controllers
             );
         }
 
-        // Edita todos los campos de una promoción existente; retorna 204 si fue exitoso
+        // Updates all fields of an existing promotion; returns 204 when the operation succeeds.
         [HttpPut("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -94,7 +84,7 @@ namespace TECAir.API.Controllers
             return NoContent();
         }
 
-        // Elimina permanentemente una promoción; retorna 204 si fue exitoso, 404 si no existe
+        // Deletes a promotion permanently; returns 204 when the operation succeeds and 404 when the promotion does not exist.
         [HttpDelete("{id:int}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

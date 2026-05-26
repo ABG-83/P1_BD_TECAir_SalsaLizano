@@ -1,30 +1,23 @@
 // =============================================================================
-// Archivo  : CheckInDto.cs
-// Capa     : TECAir.Core → DTOs → CheckIn
-// Propósito: DTO de entrada para realizar el check-in de un pasajero.
-//            Contiene los datos que el funcionario del aeropuerto envía
-//            al endpoint POST /api/checkin.
-//
-//            El servicio usa estos datos para:
-//              - Localizar la reservación del pasajero
-//              - Asignar el asiento solicitado (si está disponible)
-//              - Registrar la puerta de abordaje
+// File    : CheckInDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 using System.ComponentModel.DataAnnotations;
 
 namespace TECAir.Core.DTOs.CheckIn
 {
-    // Datos que el funcionario envía para iniciar el proceso de check-in
+    // Data sent by the staff member to begin the check-in process.
     public class CheckInDto
     {
-        // ID de la reservación del pasajero a chequear
-        // Debe corresponder a una reservación existente con payment_status = 'paid'
+        // Passenger reservation ID to check in.
+        // Must correspond to an existing reservation with payment_status = 'paid'.
         [Required(ErrorMessage = "El ID de la reservación es obligatorio.")]
         public string ReservationCode { get; set; } = string.Empty;
 
         // Asiento de preferencia seleccionado por el pasajero (ej. "12A", "5B")
-        // Se valida que no esté ya ocupado en el mismo vuelo
+        // The seat is validated to ensure it is not already occupied on the same flight.
         [Required(ErrorMessage = "El asiento es obligatorio.")]
         [MaxLength(10, ErrorMessage = "El asiento no puede superar los 10 caracteres.")]
         public string Seat { get; set; } = string.Empty;

@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : PaymentRepository.cs
+// Layer   : TECAir.Data → Repositories
+// Purpose : Implements payment persistence logic with ADO.NET.
+// =============================================================================
+
 using System.Data;
 using TECAir.Data.Connection;
 using TECAir.Data.Interfaces;
@@ -6,13 +12,15 @@ using TECAir.Data.Models;
 namespace TECAir.Data.Repositories
 {
     /// <summary>
-    /// Handles Npgsql database structural operations using raw ADO.NET connection models.
+    /// SQL-backed implementation of <see cref="IPaymentRepository"/> using native ADO.NET.
     /// </summary>
     public class PaymentRepository(IDbConnectionFactory connectionFactory) : IPaymentRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
-        // ── Row Mapping Conversion ─────────────────────────────────────────────
+        /// <summary>
+        /// Maps a data reader row into a <see cref="Payment"/> domain object.
+        /// </summary>
         private static Payment MapRow(IDataReader reader) => new()
         {
             PaymentId = reader.GetInt32(reader.GetOrdinal("payment_id")),
@@ -23,7 +31,16 @@ namespace TECAir.Data.Repositories
             PaymentStatus = Enum.Parse<PaymentStatus>(reader.GetString(reader.GetOrdinal("payment_status")))
         };
 
-        // ── Commands ───────────────────────────────────────────────────────────
+        /// <summary>
+        /// Creates and adds a command parameter.
+        /// </summary>
+        private static void AddParameter(IDbCommand command, string name, object value)
+        {
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = name;
+            parameter.Value = value ?? DBNull.Value;
+            command.Parameters.Add(parameter);
+        }
 
         /// <inheritdoc />
         public async Task<int> CreateAsync(Payment payment)
@@ -37,14 +54,12 @@ namespace TECAir.Data.Repositories
             using var command = connection.CreateCommand();
             command.CommandText = sql;
 
-            // Manual parameter binding sequence setup
             AddParameter(command, "@ReservationCode", payment.ReservationCode);
             AddParameter(command, "@Amount", payment.Amount);
             AddParameter(command, "@TransactionDate", payment.TransactionDate);
             AddParameter(command, "@TransactionReference", payment.TransactionReference);
             AddParameter(command, "@PaymentStatus", payment.PaymentStatus);
 
-            // Execute scalar since we expect a RETURNING index back
             var result = command.ExecuteScalar();
             if (result == null || result == DBNull.Value)
             {
@@ -53,8 +68,6 @@ namespace TECAir.Data.Repositories
 
             return Convert.ToInt32(result);
         }
-
-        // ── Queries ────────────────────────────────────────────────────────────
 
         /// <inheritdoc />
         public async Task<Payment?> GetByIdAsync(int paymentId)
@@ -93,15 +106,6 @@ namespace TECAir.Data.Repositories
             }
 
             return list;
-        }
-
-        // ── Core Helper Binder ─────────────────────────────────────────────────
-        private static void AddParameter(IDbCommand command, string name, object value)
-        {
-            var parameter = command.CreateParameter();
-            parameter.ParameterName = name;
-            parameter.Value = value ?? DBNull.Value;
-            command.Parameters.Add(parameter);
         }
     }
 }

@@ -1,34 +1,46 @@
 // =============================================================================
-// Archivo  : IPromotionRepository.cs
-// Capa     : TECAir.Data → Interfaces
-// Propósito: Contrato de acceso a datos para la entidad Promotion.
-//            Define las operaciones CRUD que PromotionRepository implementa
-//            usando ADO.NET puro contra la tabla 'promotions'.
+// File    : IPromotionRepository.cs
+// Layer   : TECAir.Data → Interfaces
+// Purpose : Defines the data access contract for promotion records.
 // =============================================================================
 
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
-    // Contrato que deben cumplir todas las implementaciones del repositorio de promociones
+    /// <summary>
+    /// Defines data access operations for promotion records.
+    /// </summary>
     public interface IPromotionRepository
     {
-        // Obtiene todas las promociones del sistema ordenadas por fecha de inicio descendente
+        /// <summary>
+        /// Gets all promotions registered in the system.
+        /// </summary>
         Task<IEnumerable<Promotion>> GetAllAsync();
 
-        // Obtiene solo las promociones marcadas como activas para mostrar a los clientes
+        /// <summary>
+        /// Gets only the active promotions.
+        /// </summary>
         Task<IEnumerable<Promotion>> GetActiveAsync();
 
-        // Busca una promoción específica por su identificador único
+        /// <summary>
+        /// Gets a promotion by its identifier, or returns null when no match exists.
+        /// </summary>
         Task<Promotion?> GetByIdAsync(int promotionId);
 
-        // Inserta una nueva promoción y retorna el ID auto-generado
+        /// <summary>
+        /// Creates a new promotion record and returns the generated identifier.
+        /// </summary>
         Task<int> CreateAsync(Promotion promotion);
 
-        // Actualiza todos los campos editables de una promoción existente
+        /// <summary>
+        /// Updates an existing promotion record.
+        /// </summary>
         Task UpdateAsync(Promotion promotion);
 
-        // Elimina permanentemente una promoción de la base de datos
+        /// <summary>
+        /// Deletes a promotion record by its identifier.
+        /// </summary>
         Task DeleteAsync(int promotionId);
     }
 }

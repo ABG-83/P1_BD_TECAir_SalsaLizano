@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : DbConnectionFactory.cs
+// Layer   : TECAir.Data → Connection
+// Purpose : Creates and manages database connections for the data layer.
+// =============================================================================
+
 using System.Data;
 using Npgsql;
 

@@ -1,28 +1,46 @@
+// =============================================================================
+// File    : IUserRepository.cs
+// Layer   : TECAir.Data → Interfaces
+// Purpose : Defines the data access contract for user records.
+// =============================================================================
+
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
     /// <summary>
-    /// Defines data-access operations for <see cref="User"/> records.
+    /// Defines data access operations for user records.
     /// </summary>
     public interface IUserRepository
     {
-        /// <summary>Returns all users in the system.</summary>
+        /// <summary>
+        /// Gets all users registered in the system.
+        /// </summary>
         Task<IEnumerable<User>> GetAllAsync();
 
-        /// <summary>Returns a single user by primary key, or null if not found.</summary>
+        /// <summary>
+        /// Gets a user by its identifier, or returns null when no match exists.
+        /// </summary>
         Task<User?> GetByIdAsync(int userId);
 
-        /// <summary>Returns a single user by email, or null if not found.</summary>
+        /// <summary>
+        /// Gets a user by email, or returns null when no match exists.
+        /// </summary>
         Task<User?> GetByEmailAsync(string email);
 
-        /// <summary>Inserts a new user and returns the generated ID.</summary>
+        /// <summary>
+        /// Creates a new user record and returns the generated identifier.
+        /// </summary>
         Task<int> CreateAsync(User user);
 
-        /// <summary>Updates mutable profile fields of an existing user.</summary>
+        /// <summary>
+        /// Updates an existing user record.
+        /// </summary>
         Task<bool> UpdateAsync(User user);
 
-        /// <summary>Permanently removes a user record.</summary>
+        /// <summary>
+        /// Deletes a user record by its identifier.
+        /// </summary>
         Task<bool> DeleteAsync(int userId);
     }
 }

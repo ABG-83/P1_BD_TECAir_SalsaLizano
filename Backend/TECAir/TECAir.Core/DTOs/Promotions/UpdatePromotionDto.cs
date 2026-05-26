@@ -1,10 +1,7 @@
 // =============================================================================
-// Archivo  : UpdatePromotionDto.cs
-// Capa     : TECAir.Core → DTOs/Promotions
-// Propósito: Define el cuerpo JSON que el cliente envía al PUT /api/promotions/{id}
-//            para editar una promoción existente. Incluye IsActive para que el
-//            administrador pueda activar o desactivar la promoción sin necesitar
-//            un endpoint separado.
+// File    : UpdatePromotionDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 using System.ComponentModel.DataAnnotations;
@@ -20,15 +17,15 @@ namespace TECAir.Core.DTOs.Promotions
         [Required]
         public DateOnly StartDate { get; set; }
 
-        // Debe ser posterior a StartDate, validado en el servicio
+        // Must be later than StartDate and validated by the service.
         [Required]
         public DateOnly EndDate { get; set; }
 
-        // Enviar null para eliminar la imagen actual de la promoción
+        // Send null to remove the current promotion image.
         [MaxLength(300)]
         public string? Image { get; set; }
 
-        // Permite activar o desactivar la promoción durante la edición
+        // Allows the promotion to be activated or deactivated during editing.
         [Required]
         public bool IsActive { get; set; }
 

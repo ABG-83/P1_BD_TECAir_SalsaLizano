@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : IUserService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for user operations.
+// =============================================================================
+
 using TECAir.Core.DTOs.Users;
 
 namespace TECAir.Core.Interfaces

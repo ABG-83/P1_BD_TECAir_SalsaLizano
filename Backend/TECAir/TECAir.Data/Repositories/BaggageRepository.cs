@@ -1,8 +1,7 @@
 // =============================================================================
-// Archivo  : BaggageRepository.cs
-// Capa     : TECAir.Data → Repositories
-// Propósito: Implementación de IBaggageRepository usando ADO.NET puro.
-//            Ejecuta consultas sobre la tabla 'baggages'.
+// File    : BaggageRepository.cs
+// Layer   : TECAir.Data → Repositories
+// Purpose : Implements baggage persistence logic with ADO.NET.
 // =============================================================================
 
 using System.Data;
@@ -12,13 +11,16 @@ using TECAir.Data.Models;
 
 namespace TECAir.Data.Repositories
 {
+    /// <summary>
+    /// SQL-backed implementation of <see cref="IBaggageRepository"/> using native ADO.NET.
+    /// </summary>
     public class BaggageRepository(IDbConnectionFactory connectionFactory) : IBaggageRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
-        // ── Helpers ────────────────────────────────────────────────────────────
-
-        // Convierte una fila del DataReader en un objeto Baggage
+        /// <summary>
+        /// Maps a data reader row into a <see cref="Baggage"/> domain object.
+        /// </summary>
         private static Baggage MapRow(IDataReader r) => new()
         {
             BaggageId = r.GetInt32(r.GetOrdinal("baggage_id")),
@@ -28,7 +30,9 @@ namespace TECAir.Data.Repositories
             UserId = r.GetInt32(r.GetOrdinal("user_id"))
         };
 
-        // Crea y agrega un parámetro al comando
+        /// <summary>
+        /// Creates and adds a command parameter.
+        /// </summary>
         private static void AddParam(IDbCommand cmd, string name, object value)
         {
             var p = cmd.CreateParameter();
@@ -37,10 +41,7 @@ namespace TECAir.Data.Repositories
             cmd.Parameters.Add(p);
         }
 
-        // ── Queries ────────────────────────────────────────────────────────────
-
-
-        // Inserta la maleta y recupera el baggage_id generado por SERIAL con RETURNING
+        /// <inheritdoc />
         public async Task<int> CreateAsync(Baggage baggage)
         {
             const string sql = """
@@ -58,12 +59,11 @@ namespace TECAir.Data.Repositories
             AddParam(command, "reservationCode", baggage.ReservationCode);
             AddParam(command, "userId", baggage.UserId);
 
-            // RETURNING devuelve el ID generado directamente como escalar
             var result = command.ExecuteScalar();
             return Convert.ToInt32(result);
         }
 
-        // Retorna todas las maletas asociadas a una reservación
+        /// <inheritdoc />
         public async Task<IEnumerable<Baggage>> GetByReservationCodeAsync(string reservationCode)
         {
             const string sql = """
@@ -85,7 +85,7 @@ namespace TECAir.Data.Repositories
             return baggages;
         }
 
-        // Busca una maleta por su ID; retorna null si no existe
+        /// <inheritdoc />
         public async Task<Baggage?> GetByIdAsync(int baggageId)
         {
             const string sql = """
@@ -103,8 +103,7 @@ namespace TECAir.Data.Repositories
             return reader.Read() ? MapRow(reader) : null;
         }
 
-        // Cuenta el total de maletas de una reservación usando COUNT en la BD
-        // Es más eficiente que traer todas las filas solo para contarlas
+        /// <inheritdoc />
         public async Task<int> CountByReservationCodeAsync(string reservationCode)
         {
             const string sql = """

@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : ReservationService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for reservation operations.
+// =============================================================================
+
 using TECAir.Data.Interfaces;
 using TECAir.Data.Models;
 using TECAir.Core.Interfaces;
