@@ -86,7 +86,7 @@ const FlightManagementView = () => {
     }
   };
 
-  const set = (field: keyof FlightCreate) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+  const set = (field: keyof FlightCreate) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [field]: field.startsWith('id_') ? Number(e.target.value) : e.target.value }));
 
   return (

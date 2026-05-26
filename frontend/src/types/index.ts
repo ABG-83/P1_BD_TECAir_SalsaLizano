@@ -46,6 +46,7 @@ export interface Flight {
   id_Aeropuerto_Destino: number;
   aeropuertoOrigen?: Airport;
   aeropuertoDestino?: Airport;
+  flightNumber?: string;
 }
 
 export interface FlightCreate {
@@ -69,7 +70,8 @@ export interface Reservation {
 
 export interface ReservationCreate {
   id_Usuario: number;
-  num_Vuelo: number;
+  num_Vuelo?: number;
+  flightNumber?: string;
 }
 
 export interface CheckInRequest {

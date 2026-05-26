@@ -2,18 +2,17 @@ import { useState, useEffect } from 'react';
 import { Container, Alert, Button, Modal } from 'react-bootstrap';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import FlightCard from '../components/FlightCard';
-import { flightService } from '../services/flightService';
 import { reservationService } from '../services/reservationService';
 import { useAuth } from '../context/AuthContext';
+import { useFlights } from '../hooks/useFlights';
 import type { Flight } from '../types';
 
 const ReservationView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const [flights, setFlights] = useState<Flight[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { flights, loading, error: searchError, searchFlights } = useFlights();
+  const [reservationError, setReservationError] = useState('');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [reserving, setReserving] = useState(false);
   const [success, setSuccess] = useState('');
@@ -23,39 +22,39 @@ const ReservationView = () => {
   const fecha = searchParams.get('fecha') ?? '';
 
   useEffect(() => {
-    setLoading(true);
-    setError('');
-    flightService.search({
+    setReservationError('');
+    setSuccess('');
+    searchFlights({
       origen: origen ? Number(origen) : undefined,
       destino: destino ? Number(destino) : undefined,
       fecha: fecha || undefined,
-    })
-      .then(setFlights)
-      .catch(() => setError('No se pudieron cargar los vuelos. Verifica que el backend esté activo.'))
-      .finally(() => setLoading(false));
-  }, [origen, destino, fecha]);
+    }).catch(() => undefined);
+  }, [origen, destino, fecha, searchFlights]);
 
   const handleReserve = (flightId: number) => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
+
     const flight = flights.find(f => f.num_Vuelo === flightId);
     if (flight) setSelectedFlight(flight);
   };
 
   const confirmReservation = async () => {
     if (!selectedFlight || !user) return;
+
     setReserving(true);
     try {
       const cod = await reservationService.create({
         id_Usuario: user.id,
+        flightNumber: selectedFlight.flightNumber,
         num_Vuelo: selectedFlight.num_Vuelo,
       });
       setSuccess(`¡Reservación #${cod} confirmada! Revisa tus reservaciones.`);
       setSelectedFlight(null);
     } catch {
-      setError('No se pudo completar la reservación.');
+      setReservationError('No se pudo completar la reservación.');
     } finally {
       setReserving(false);
     }
@@ -67,7 +66,8 @@ const ReservationView = () => {
       <p className="text-muted mb-4">Selecciona el vuelo que mejor se adapte a tu horario.</p>
 
       {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
-      {error && <Alert variant="warning">{error}</Alert>}
+      {searchError && <Alert variant="warning">{searchError}</Alert>}
+      {reservationError && <Alert variant="warning">{reservationError}</Alert>}
 
       {loading ? (
         <div className="text-center py-5">
@@ -75,7 +75,7 @@ const ReservationView = () => {
             <span className="visually-hidden">Cargando vuelos...</span>
           </div>
         </div>
-      ) : flights.length === 0 && !error ? (
+      ) : flights.length === 0 && !searchError ? (
         <div className="text-center py-5 text-muted">
           <p className="fs-5">No se encontraron vuelos para los criterios seleccionados.</p>
           <Button variant="outline-dark" onClick={() => navigate('/')}>Volver a buscar</Button>

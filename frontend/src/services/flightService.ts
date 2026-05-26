@@ -2,10 +2,93 @@ import api from './api';
 import type { Flight, FlightCreate } from '../types';
 import { mockDb } from '../mocks/data';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'false';
 
 const delay = <T>(data: T): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(data), 300));
+
+type BackendSearchFlight = {
+  flightNumber?: string;
+  departureTime: string;
+  arrivalTime: string;
+  status?: string | number;
+  airplanePlateNumber?: string;
+  originAirportId: number;
+  destinationAirportId: number;
+};
+
+type BackendFlightDto = {
+  flightNumber: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: string | number;
+  airplanePlateNumber: string;
+  origin: { airportId: number; name: string; location: string };
+  destination: { airportId: number; name: string; location: string };
+  passengerCapacity?: number;
+  stops?: unknown[];
+};
+
+const parseFlightNumber = (flightNumber?: string | number): number => {
+  if (typeof flightNumber === 'number') {
+    return Number.isFinite(flightNumber) ? flightNumber : 0;
+  }
+
+  if (!flightNumber) {
+    return 0;
+  }
+
+  const digits = flightNumber.match(/\d+/g)?.join('');
+  return digits ? Number(digits) : 0;
+};
+
+const mapFlightStatus = (status?: string | number): Flight['estado'] => {
+  if (typeof status === 'number') {
+    switch (status) {
+      case 1:
+        return 'abierto';
+      case 3:
+      case 4:
+        return 'cerrado';
+      case 5:
+        return 'cancelado';
+      default:
+        return 'programado';
+    }
+  }
+
+  const normalized = status?.toLowerCase() ?? '';
+  if (normalized.includes('board')) return 'abierto';
+  if (normalized.includes('cancel')) return 'cancelado';
+  if (normalized.includes('land') || normalized.includes('air')) return 'cerrado';
+  return 'programado';
+};
+
+const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
+  if ('origin' in flight && 'destination' in flight) {
+    return {
+      num_Vuelo: parseFlightNumber(flight.flightNumber),
+      hora_Salida: flight.departureTime,
+      hora_Llegada: flight.arrivalTime,
+      estado: mapFlightStatus(flight.status),
+      matricula: flight.airplanePlateNumber,
+      id_Aeropuerto_Origen: flight.origin.airportId,
+      id_Aeropuerto_Destino: flight.destination.airportId,
+      flightNumber: flight.flightNumber,
+    };
+  }
+
+  return {
+    num_Vuelo: parseFlightNumber(flight.flightNumber),
+    hora_Salida: flight.departureTime,
+    hora_Llegada: flight.arrivalTime,
+    estado: mapFlightStatus(flight.status),
+    matricula: flight.airplanePlateNumber ?? '',
+    id_Aeropuerto_Origen: flight.originAirportId,
+    id_Aeropuerto_Destino: flight.destinationAirportId,
+    flightNumber: flight.flightNumber,
+  };
+};
 
 const mock = {
   getAll: () => delay([...mockDb.flights]),
@@ -61,20 +144,20 @@ const mock = {
 
 const real = {
   getAll: async (): Promise<Flight[]> => {
-    const res = await api.get('/flights');
-    return res.data;
+    const res = await api.get<BackendFlightDto[]>('/flights');
+    return res.data.map(mapFlight);
   },
   getById: async (id: number): Promise<Flight> => {
-    const res = await api.get(`/flights/${id}`);
-    return res.data;
+    const res = await api.get<BackendFlightDto>(`/flights/${id}`);
+    return mapFlight(res.data);
   },
   search: async (params: { origen?: number; destino?: number; fecha?: string }): Promise<Flight[]> => {
     const query = new URLSearchParams();
-    if (params.origen)  query.append('origen',  String(params.origen));
-    if (params.destino) query.append('destino', String(params.destino));
-    if (params.fecha)   query.append('fecha',   params.fecha);
-    const res = await api.get(`/flights/search?${query.toString()}`);
-    return res.data;
+    if (params.origen) query.append('originId', String(params.origen));
+    if (params.destino) query.append('destinationId', String(params.destino));
+
+    const res = await api.get<BackendSearchFlight[]>(`/flights/search?${query.toString()}`);
+    return res.data.map(mapFlight);
   },
   create: async (dto: FlightCreate): Promise<number> => {
     const res = await api.post('/flights', dto);

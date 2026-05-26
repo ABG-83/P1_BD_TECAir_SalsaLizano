@@ -1,30 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button } from 'react-bootstrap';
+import { useState } from 'react';
+import { Container, Row, Col, Form, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { airportService } from '../services/airportService';
-import type { Airport } from '../types';
-
-const FALLBACK_AIRPORTS: Airport[] = [
-  { id_Aeropuerto: 1, nombre: 'Aeropuerto Internacional Juan Santamaría', ubicacion: 'Alajuela, Costa Rica' },
-  { id_Aeropuerto: 2, nombre: 'Aeropuerto Internacional Daniel Oduber', ubicacion: 'Liberia, Costa Rica' },
-  { id_Aeropuerto: 3, nombre: 'Aeropuerto Internacional El Dorado', ubicacion: 'Bogotá, Colombia' },
-  { id_Aeropuerto: 4, nombre: 'Aeropuerto Internacional Jorge Chávez', ubicacion: 'Lima, Perú' },
-  { id_Aeropuerto: 5, nombre: 'Aeropuerto Internacional Tocumen', ubicacion: 'Ciudad de Panamá, Panamá' },
-  { id_Aeropuerto: 6, nombre: 'Aeropuerto Internacional Benito Juárez', ubicacion: 'Ciudad de México, México' },
-];
+import { useAirport } from '../hooks/useAirports';
 
 const HomeView = () => {
   const navigate = useNavigate();
-  const [airports, setAirports] = useState<Airport[]>([]);
+  const { airports, loading, error } = useAirport();
+
   const [origen, setOrigen] = useState('');
   const [destino, setDestino] = useState('');
   const [fecha, setFecha] = useState('');
-
-  useEffect(() => {
-    airportService.getAll()
-      .then(setAirports)
-      .catch(() => setAirports(FALLBACK_AIRPORTS));
-  }, []);
 
   const handleSearch = (e: { preventDefault(): void }) => {
     e.preventDefault();
@@ -43,24 +28,43 @@ const HomeView = () => {
 
       <div className="bg-white p-5 rounded shadow-sm border-0">
         <h3 className="mb-4 fw-bold">Encuentra tu próximo vuelo</h3>
+
+        {error && (
+          <Alert variant="danger" className="mb-4">
+            {error}
+          </Alert>
+        )}
+
         <Form onSubmit={handleSearch}>
           <Row className="mb-4">
             <Form.Group as={Col} md="6" controlId="origin" className="mb-4 mb-md-0">
               <Form.Label className="text-muted small text-uppercase fw-bold">Origen</Form.Label>
-              <Form.Select required className="minimal-input fs-5" value={origen} onChange={e => setOrigen(e.target.value)}>
-                <option value="">¿Desde dónde viajas?</option>
-                {airports.map(a => (
-                  <option key={a.id_Aeropuerto} value={a.id_Aeropuerto}>{a.nombre}</option>
+              <Form.Select
+                required
+                className="minimal-input fs-5"
+                value={origen}
+                onChange={e => setOrigen(e.target.value)}
+                disabled={loading}
+              >
+                <option key="origin-placeholder" value="">{loading ? 'Cargando aeropuertos...' : '¿Desde dónde viajas?'}</option>
+                {!loading && airports.map(a => (
+                  <option key={`origin-${a.airportId}`} value={a.airportId}>{a.name}</option>
                 ))}
               </Form.Select>
             </Form.Group>
 
             <Form.Group as={Col} md="6" controlId="destination">
               <Form.Label className="text-muted small text-uppercase fw-bold">Destino</Form.Label>
-              <Form.Select required className="minimal-input fs-5" value={destino} onChange={e => setDestino(e.target.value)}>
-                <option value="">¿A dónde vas?</option>
-                {airports.filter(a => String(a.id_Aeropuerto) !== origen).map(a => (
-                  <option key={a.id_Aeropuerto} value={a.id_Aeropuerto}>{a.nombre}</option>
+              <Form.Select
+                required
+                className="minimal-input fs-5"
+                value={destino}
+                onChange={e => setDestino(e.target.value)}
+                disabled={loading}
+              >
+                <option key="destination-placeholder" value="">{loading ? 'Cargando aeropuertos...' : '¿A dónde vas?'}</option>
+                {!loading && airports.filter(a => a.airportId !== Number(origen)).map(a => (
+                  <option key={`destination-${a.airportId}`} value={a.airportId}>{a.name}</option>
                 ))}
               </Form.Select>
             </Form.Group>

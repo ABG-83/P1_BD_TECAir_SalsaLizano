@@ -20,13 +20,14 @@ const mock = {
   },
 
   create: (dto: ReservationCreate): Promise<number> => {
-    const flight = mockDb.flights.find(f => f.num_Vuelo === dto.num_Vuelo);
+    const numVuelo = dto.num_Vuelo ?? Number((dto.flightNumber ?? '').match(/\d+/g)?.join('') ?? 0);
+    const flight = mockDb.flights.find(f => f.num_Vuelo === numVuelo);
     const newRes: Reservation = {
       cod_Reservacion: mockDb.nextId.reservacion++,
       fecha: new Date().toISOString(),
       estado_Pago: 'pendiente',
       id_Usuario: dto.id_Usuario,
-      num_Vuelo: dto.num_Vuelo,
+      num_Vuelo: numVuelo,
       vuelo: flight,
     };
     mockDb.reservations.push(newRes);
@@ -55,7 +56,12 @@ const real = {
     return res.data;
   },
   create: async (dto: ReservationCreate): Promise<number> => {
-    const res = await api.post('/reservations', dto);
+    const payload = {
+      userId: dto.id_Usuario,
+      flightNumber: dto.flightNumber ?? String(dto.num_Vuelo ?? ''),
+    };
+
+    const res = await api.post('/reservations', payload);
     return res.data.cod_Reservacion ?? res.data;
   },
   cancel: async (id: number): Promise<void> => {

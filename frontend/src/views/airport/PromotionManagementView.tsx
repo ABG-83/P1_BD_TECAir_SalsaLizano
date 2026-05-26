@@ -74,7 +74,7 @@ const PromotionManagementView = () => {
     }
   };
 
-  const set = (field: keyof PromotionCreate) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const set = (field: keyof PromotionCreate) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const val = field.startsWith('id_') ? Number(e.target.value)
       : field === 'precio' ? Number(e.target.value)
       : field === 'estado_Activa' ? (e.target as HTMLInputElement).checked

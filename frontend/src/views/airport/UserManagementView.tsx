@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Container, Table, Badge, Button, Modal, Form, Alert, Spinner } from 'react-bootstrap';
+import { Table, Badge, Button, Modal, Form, Alert, Spinner } from 'react-bootstrap';
 import { userService } from '../../services/userService';
 import type { User, UserRequest, UserRole } from '../../types';
 
@@ -71,8 +71,10 @@ const UserManagementView = () => {
     }
   };
 
-  const set = (field: keyof UserRequest) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const set = (field: keyof UserRequest) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const value = field === 'millas' ? Number(e.target.value) : e.target.value;
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
 
   return (
     <>
