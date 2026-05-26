@@ -31,7 +31,7 @@ namespace TECAir.Core.DTOs.Payments
         /// Gets or sets the raw primary account credit card number string.
         /// </summary>
         [Required(ErrorMessage = "The credit card account number is required.")]
-        [CreditCard(ErrorMessage = "The provided value is not a structurally valid credit card sequence format.")]
+        [MinLength(13, ErrorMessage = "The card number must be at least 13 digits.")]
         public string CardNumber { get; set; } = string.Empty;
 
         /// <summary>

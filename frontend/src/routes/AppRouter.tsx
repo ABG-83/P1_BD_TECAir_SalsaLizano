@@ -6,6 +6,7 @@ import LoginView from '../views/LoginView';
 import RegisterView from '../views/RegisterView';
 import PromotionsView from '../views/PromotionsView';
 import MyReservationsView from '../views/MyReservationsView';
+import PaymentView from '../views/PaymentView';
 import ProtectedRoute from '../components/ProtectedRoute';
 import AirportLayout from '../views/airport/AirportLayout';
 import AirportDashboard from '../views/airport/AirportDashboard';
@@ -13,6 +14,7 @@ import FlightManagementView from '../views/airport/FlightManagementView';
 import UserManagementView from '../views/airport/UserManagementView';
 import CheckInManagementView from '../views/airport/CheckInManagementView';
 import PromotionManagementView from '../views/airport/PromotionManagementView';
+import ReservationManagementView from '../views/airport/ReservationManagementView';
 
 const STAFF_ROLES = ['funcionario', 'administrador'] as const;
 
@@ -26,6 +28,7 @@ const AppRouter = () => {
       <Route path="/login" element={<LoginView />} />
       <Route path="/registro" element={<RegisterView />} />
       <Route path="/promociones" element={<PromotionsView />} />
+      <Route path="/pago" element={<PaymentView />} />
       <Route
         path="/mis-reservaciones"
         element={
@@ -54,6 +57,9 @@ const AppRouter = () => {
         } />
         <Route path="promociones" element={
           <ProtectedRoute requiredRole="administrador"><PromotionManagementView /></ProtectedRoute>
+        } />
+        <Route path="reservaciones" element={
+          <ProtectedRoute requiredRole="administrador"><ReservationManagementView /></ProtectedRoute>
         } />
       </Route>
     </Routes>

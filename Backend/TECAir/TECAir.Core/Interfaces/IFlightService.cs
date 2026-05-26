@@ -33,5 +33,11 @@ namespace TECAir.Core.Interfaces
         /// <returns>A collection of matching available flights sorted chronologically.</returns>
         /// <exception cref="ArgumentException">Thrown when input IDs violate business safety guards.</exception>
         Task<IEnumerable<Flight>> SearchFlightsByRouteAsync(int originAirportId, int destinationAirportId);
+
+        /// <summary>
+        /// Updates the operational status of a flight. Accepts Spanish UI values
+        /// (programado, abierto, cerrado, cancelado) and maps them to the backend enum.
+        /// </summary>
+        Task UpdateFlightStatusAsync(string flightNumber, string status);
     }
 }

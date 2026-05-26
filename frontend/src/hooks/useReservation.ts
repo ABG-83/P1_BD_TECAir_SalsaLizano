@@ -19,9 +19,7 @@ export const useReservation = () => {
       };
 
       const res = await api.post('/reservations', backendPayload);
-      
-      // Retorna el código generado por la base de datos de PostgreSQL
-      return res.data.cod_Reservacion ?? res.data;
+      return res.data.reservationCode ?? res.data;
     } catch (err: any) {
       const message = err.response?.data?.title || 
                       err.message || 

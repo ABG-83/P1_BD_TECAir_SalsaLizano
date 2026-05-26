@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Row, Col, Form, Button, Alert, Card, Table } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import { checkInService } from '../../services/checkInService';
 import type { BoardingPass, Baggage, BaggageCreate } from '../../types';
 
 const CheckInManagementView = () => {
-  const [codReservacion, setCodReservacion] = useState('');
+  const [searchParams] = useSearchParams();
+  const [codReservacion, setCodReservacion] = useState(searchParams.get('cod') ?? '');
   const [apellidos, setApellidos] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,9 +22,9 @@ const CheckInManagementView = () => {
     setBaggages([]);
     setLoading(true);
     try {
-      const pass = await checkInService.doCheckIn(Number(codReservacion), apellidos);
+      const pass = await checkInService.doCheckIn(codReservacion.trim(), apellidos);
       setBoardingPass(pass);
-      const bags = await checkInService.getBaggageByReservation(Number(codReservacion)).catch(() => []);
+      const bags = await checkInService.getBaggageByReservation(codReservacion.trim()).catch(() => []);
       setBaggages(bags);
     } catch {
       setError('Reservación no encontrada. Verifica el código y apellidos.');
@@ -80,7 +82,7 @@ const CheckInManagementView = () => {
               <Form onSubmit={handleCheckIn}>
                 <Form.Group className="mb-3">
                   <Form.Label className="text-muted small text-uppercase fw-bold">Código de Reservación</Form.Label>
-                  <Form.Control type="number" className="minimal-input" placeholder="Ej: 1001" value={codReservacion} onChange={e => setCodReservacion(e.target.value)} required />
+                  <Form.Control type="text" className="minimal-input" placeholder="Ej: RES-001" value={codReservacion} onChange={e => setCodReservacion(e.target.value)} required />
                 </Form.Group>
                 <Form.Group className="mb-4">
                   <Form.Label className="text-muted small text-uppercase fw-bold">Apellidos del Pasajero</Form.Label>

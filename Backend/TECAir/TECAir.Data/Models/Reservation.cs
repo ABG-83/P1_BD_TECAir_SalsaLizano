@@ -53,5 +53,10 @@ namespace TECAir.Data.Models
         /// Gets or sets the flight number assigned to the reservation.
         /// </summary>
         public string FlightNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the full name of the user (populated via JOIN, not stored in reservations table).
+        /// </summary>
+        public string? UserName { get; set; }
     }
 }

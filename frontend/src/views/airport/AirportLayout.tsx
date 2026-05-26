@@ -3,8 +3,9 @@ import { useAuth } from '../../context/AuthContext';
 
 const ALL_NAV_ITEMS = [
   { to: '/aeropuerto',             label: 'Dashboard',   icon: 'bi-grid',          adminOnly: false },
-  { to: '/aeropuerto/checkin',     label: 'Check-in',    icon: 'bi-check2-square', adminOnly: false },
-  { to: '/aeropuerto/vuelos',      label: 'Vuelos',      icon: 'bi-airplane',      adminOnly: true  },
+  { to: '/aeropuerto/checkin',        label: 'Check-in',      icon: 'bi-check2-square',  adminOnly: false },
+  { to: '/aeropuerto/reservaciones',  label: 'Reservaciones', icon: 'bi-journal-text',   adminOnly: true  },
+  { to: '/aeropuerto/vuelos',         label: 'Vuelos',        icon: 'bi-airplane',       adminOnly: true  },
   { to: '/aeropuerto/usuarios',    label: 'Usuarios',    icon: 'bi-people',        adminOnly: true  },
   { to: '/aeropuerto/promociones', label: 'Promociones', icon: 'bi-tag',           adminOnly: true  },
 ];

@@ -72,6 +72,18 @@ namespace TECAir.API.Controllers
         //   "stopAirportIds":      [5]
         // }
         // For a direct flight: "stopAirportIds": []
+        // PATCH /api/flights/{number}/status
+        // Updates only the operational status of a flight.
+        // Accepts: { "status": "abierto" | "cerrado" | "cancelado" | "programado" }
+        [HttpPatch("{number}/status")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateStatus(string number, [FromBody] UpdateFlightStatusDto dto)
+        {
+            await _flightService.UpdateFlightStatusAsync(number, dto.Status);
+            return NoContent();
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

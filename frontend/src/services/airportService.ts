@@ -2,7 +2,7 @@ import api from './api';
 import type { Airport } from '../types';
 import { mockDb } from '../mocks/data';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'false';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 type BackendAirport = {
   airportId: number;

@@ -26,10 +26,25 @@ namespace TECAir.Core.Services
             Date = model.Date,
             PaymentState = model.PaymentState.ToString(),
             UserId = model.UserId,
-            FlightNumber = model.FlightNumber
+            FlightNumber = model.FlightNumber,
+            UserName = model.UserName
         };
 
         // ── Queries ───────────────────────────────────────────────────────────
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<ReservationResponseDto>> GetAllReservationsAsync()
+        {
+            var results = await _reservationRepository.GetAllAsync();
+            return results.Select(MapToResponse);
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<ReservationResponseDto>> SearchReservationsByNameAsync(string name)
+        {
+            var results = await _reservationRepository.SearchByNameAsync(name);
+            return results.Select(MapToResponse);
+        }
 
         /// <inheritdoc />
         public async Task<ReservationResponseDto> CreateReservationAsync(CreateReservationDto dto)

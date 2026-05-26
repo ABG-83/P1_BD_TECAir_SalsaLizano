@@ -58,7 +58,7 @@ namespace TECAir.Data.Repositories
             AddParameter(command, "@Amount", payment.Amount);
             AddParameter(command, "@TransactionDate", payment.TransactionDate);
             AddParameter(command, "@TransactionReference", payment.TransactionReference);
-            AddParameter(command, "@PaymentStatus", payment.PaymentStatus);
+            AddParameter(command, "@PaymentStatus", payment.PaymentStatus.ToString());
 
             var result = command.ExecuteScalar();
             if (result == null || result == DBNull.Value)

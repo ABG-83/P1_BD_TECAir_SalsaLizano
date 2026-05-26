@@ -16,5 +16,6 @@ namespace TECAir.Core.DTOs.Reservations
         public string PaymentState { get; set; } = string.Empty;
         public int UserId { get; set; }
         public string FlightNumber { get; set; } = string.Empty;
+        public string? UserName { get; set; }
     }
 }

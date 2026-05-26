@@ -53,10 +53,10 @@ export const mockFlights: Flight[] = [
 ];
 
 export const mockReservations: Reservation[] = [
-  { cod_Reservacion: 1001, fecha: '2026-06-01T10:00:00', estado_Pago: 'pagado',    id_Usuario: 1, num_Vuelo: 101, vuelo: mockFlights[0] },
-  { cod_Reservacion: 1002, fecha: '2026-06-02T11:00:00', estado_Pago: 'pendiente', id_Usuario: 1, num_Vuelo: 102, vuelo: mockFlights[1] },
-  { cod_Reservacion: 1003, fecha: '2026-06-03T12:00:00', estado_Pago: 'pagado',    id_Usuario: 5, num_Vuelo: 101, vuelo: mockFlights[0] },
-  { cod_Reservacion: 1004, fecha: '2026-06-04T09:00:00', estado_Pago: 'cancelado', id_Usuario: 6, num_Vuelo: 103, vuelo: mockFlights[2] },
+  { cod_Reservacion: '1001', fecha: '2026-06-01T10:00:00', estado_Pago: 'pagado',    id_Usuario: 1, num_Vuelo: 101, vuelo: mockFlights[0] },
+  { cod_Reservacion: '1002', fecha: '2026-06-02T11:00:00', estado_Pago: 'pendiente', id_Usuario: 1, num_Vuelo: 102, vuelo: mockFlights[1] },
+  { cod_Reservacion: '1003', fecha: '2026-06-03T12:00:00', estado_Pago: 'pagado',    id_Usuario: 5, num_Vuelo: 101, vuelo: mockFlights[0] },
+  { cod_Reservacion: '1004', fecha: '2026-06-04T09:00:00', estado_Pago: 'cancelado', id_Usuario: 6, num_Vuelo: 103, vuelo: mockFlights[2] },
 ];
 
 export const mockPromotions: Promotion[] = [
@@ -81,12 +81,12 @@ export const mockPromotions: Promotion[] = [
 ];
 
 export const mockBoardingPasses: BoardingPass[] = [
-  { id_Pase: 1, asiento: '12A', puerta_Abordaje: 'G4', hora_Impresion: '2026-07-15T06:30:00', cod_Reservacion: 1001, num_Vuelo: 101 },
+  { id_Pase: 1, asiento: '12A', puerta_Abordaje: 'G4', hora_Impresion: '2026-07-15T06:30:00', cod_Reservacion: '1001', num_Vuelo: '101' },
 ];
 
 export const mockBaggages: Baggage[] = [
-  { num_Maleta: 1, peso: 23.0, color: 'Negro',  cod_Reservacion: 1001, id_Usuario: 1 },
-  { num_Maleta: 2, peso: 15.5, color: 'Azul',   cod_Reservacion: 1001, id_Usuario: 1 },
+  { num_Maleta: 1, peso: 23.0, color: 'Negro',  cod_Reservacion: '1001', id_Usuario: 1 },
+  { num_Maleta: 2, peso: 15.5, color: 'Azul',   cod_Reservacion: '1001', id_Usuario: 1 },
 ];
 
 let nextId = {

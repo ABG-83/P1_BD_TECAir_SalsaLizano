@@ -85,10 +85,14 @@ namespace TECAir.Data.Repositories
         public async Task<Flight?> GetByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
-                SELECT flight_number, departure_time, arrival_time, status,
-                       airplane_plate_number, origin_airport_id, destination_airport_id
-                FROM flights
-                WHERE flight_number = @flightNumber;
+                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status,
+                       f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
+                       COALESCE(a1.name, '') AS origin_airport_name,
+                       COALESCE(a2.name, '') AS destination_airport_name
+                FROM flights f
+                LEFT JOIN airports a1 ON f.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON f.destination_airport_id = a2.airport_id
+                WHERE f.flight_number = @flightNumber;
                 """;
 
             using var connection = await _connectionFactory.CreateConnectionAsync();

@@ -5,6 +5,7 @@ import FlightCard from '../components/FlightCard';
 import { useReservation } from '../hooks/useReservation';
 import { useAuth } from '../context/AuthContext';
 import { useFlights } from '../hooks/useFlights';
+import { promotionService } from '../services/promotionService';
 import type { Flight } from '../types';
 
 const ReservationView = () => {
@@ -17,7 +18,6 @@ const ReservationView = () => {
 
   const [reservationError, setReservationError] = useState('');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [success, setSuccess] = useState('');
 
   const origen = searchParams.get('origen') ?? '';
   const destino = searchParams.get('destino') ?? '';
@@ -25,7 +25,6 @@ const ReservationView = () => {
 
   useEffect(() => {
     setReservationError('');
-    setSuccess('');
 
     // Prevenimos enviar ceros o valores nulos que rompan la validación de C# (Int32)
     const originId = origen ? Number(origen) : undefined;
@@ -58,15 +57,25 @@ const ReservationView = () => {
 
     setReservationError('');
     try {
-      // Consumo directo de la acción expuesta por el Hook
       const cod = await createReservation({
         id_Usuario: user.id,
         flightNumber: selectedFlight.flightNumber,
         num_Vuelo: selectedFlight.num_Vuelo,
       });
 
-      setSuccess(`¡Reservación #${cod} confirmada! Revisa tus reservaciones.`);
+      // Look up the active promotion price for this route
+      let price: number | undefined;
+      try {
+        const promos = await promotionService.getActive();
+        const match = promos.find(p =>
+          p.id_Aeropuerto_Origen === selectedFlight.id_Aeropuerto_Origen &&
+          p.id_Aeropuerto_Destino === selectedFlight.id_Aeropuerto_Destino
+        );
+        if (match) price = match.precio;
+      } catch { /* no promotion found, price stays undefined */ }
+
       setSelectedFlight(null);
+      navigate(`/pago?cod=${cod}${price !== undefined ? `&monto=${price}` : ''}`);
     } catch (err: any) {
       const msg = err.response?.data?.title || 'No se pudo completar la reservación en el sistema central de TECAir.';
       setReservationError(msg);
@@ -78,7 +87,6 @@ const ReservationView = () => {
       <h3 className="mb-2 fw-bold">Resultados de Búsqueda</h3>
       <p className="text-muted mb-4">Selecciona el vuelo que mejor se adapte a tu horario.</p>
 
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
       {searchError && <Alert variant="warning">{searchError}</Alert>}
       {reservationError && <Alert variant="warning">{reservationError}</Alert>}
 

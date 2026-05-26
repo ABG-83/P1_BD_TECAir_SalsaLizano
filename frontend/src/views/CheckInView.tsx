@@ -10,8 +10,7 @@ const CheckInView = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Invocamos la rutina encadenada pasando los parámetros requeridos
-    await executeCheckIn(Number(codReservacion), apellidos);
+    await executeCheckIn(codReservacion.trim(), apellidos);
   };
 
   const handleReset = () => {
@@ -74,9 +73,9 @@ const CheckInView = () => {
           <Form.Group className="mb-4" controlId="reservationCode">
             <Form.Label className="text-muted small text-uppercase fw-bold">Código de Reservación</Form.Label>
             <Form.Control
-              type="number"
+              type="text"
               className="minimal-input"
-              placeholder="Ej: 1001"
+              placeholder="Ej: RES-001"
               value={codReservacion}
               onChange={e => setCodReservacion(e.target.value)}
               required

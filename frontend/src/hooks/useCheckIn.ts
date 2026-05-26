@@ -16,67 +16,49 @@ export const useCheckIn = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const executeCheckIn = useCallback(async (reservationId: number, lastName: string) => {
+  const executeCheckIn = useCallback(async (reservationCode: string, lastName: string) => {
     setLoading(true);
     setError(null);
     setBoardingPass(null);
 
     try {
-      // 1. Generar asiento válido
       const randomRow = Math.floor(Math.random() * 20) + 1;
       const letters = ['A', 'B', 'C', 'D', 'F'];
-      const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-      const seatString = `${randomRow}${randomLetter}`;
-      
-      // 2. 💡 CORRECCIÓN DE PUERTA: Formato corto (ej: "A3") para no romper el [MaxLength(10)] del DTO de C#
+      const seatString = `${randomRow}${letters[Math.floor(Math.random() * letters.length)]}`;
       const gates = ['A', 'B', 'C'];
       const randomGate = `${gates[Math.floor(Math.random() * gates.length)]}${Math.floor(Math.random() * 5) + 1}`;
 
-      const payload = {
-        reservationCode: String(reservationId),
+      const createResponse = await api.post('/checkin', {
+        reservationCode,
         seat: seatString,
-        boardingGate: randomGate
-      };
+        boardingGate: randomGate,
+      });
 
-      console.log('Enviando payload verificado a TECAir Core:', payload);
+      const checkInId = createResponse.data?.checkInId ?? createResponse.data?.id;
+      if (!checkInId) throw new Error('El backend no retornó un ID de check-in válido.');
 
-      // 3. Registrar transacción de Check-In
-      const createResponse = await api.post('/checkin', payload);
-      
-      const checkInId = createResponse.data?.checkInId ?? 
-                        createResponse.data?.CheckInId ?? 
-                        createResponse.data?.id;
-
-      if (!checkInId) {
-        throw new Error('El backend procesó el chequeo pero no retornó un ID válido.');
-      }
-
-      // 4. Obtener Pase de abordaje final
       const passResponse = await api.get<BackendBoardingPassDto>(`/checkin/${checkInId}/boarding-pass`);
       const backendPass = passResponse.data;
 
       const mappedPass: BoardingPass = {
+        id_Pase: checkInId,
         num_Vuelo: backendPass.flightNumber,
-        cod_Reservacion: Number(backendPass.reservationCode),
+        cod_Reservacion: backendPass.reservationCode,
         asiento: backendPass.seat,
         puerta_Abordaje: backendPass.boardingGate,
-        hora_Impresion: backendPass.printTime
+        hora_Impresion: backendPass.printTime,
       };
 
       setBoardingPass(mappedPass);
       return mappedPass;
 
     } catch (err: any) {
-      console.error('Check-in operational routine failure:', err);
-
-      // 💡 MANEJO DE RESPUESTA 404 RELACIONAL
       if (err.response?.status === 404) {
-        setError(`La reservación #${reservationId} no fue encontrada o no se encuentra en estado 'PAGADA'.`);
+        setError(`La reservación '${reservationCode}' no fue encontrada o no está en estado 'Paid'.`);
         return null;
       }
-
       const backendMessage = err.response?.data?.message || err.response?.data?.title;
-      setError(backendMessage || 'Ocurrió un error inesperado al procesar el pre-chequeo.');
+      setError(backendMessage || 'Ocurrió un error inesperado al procesar el check-in.');
       return null;
     } finally {
       setLoading(false);

@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Table, Badge, Button, Modal, Form, Alert, Spinner, Row, Col } from 'react-bootstrap';
+import { Table, Button, Modal, Form, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { flightService } from '../../services/flightService';
 import { airportService } from '../../services/airportService';
 import type { Flight, FlightCreate, FlightStatus, Airport } from '../../types';
 
-const STATUS_BADGE: Record<FlightStatus, string> = {
-  programado: 'secondary',
-  abierto:    'success',
-  cerrado:    'danger',
-  cancelado:  'warning',
+const STATUS_LABELS: Record<FlightStatus, string> = {
+  programado: 'Programado',
+  abierto:    'Abordaje',
+  cerrado:    'Aterrizado',
+  cancelado:  'Cancelado',
 };
 
 const STATUS_OPTIONS: FlightStatus[] = ['programado', 'abierto', 'cerrado', 'cancelado'];
 
 const EMPTY_FORM: FlightCreate = {
-  hora_Salida: '', hora_Llegada: '', estado: 'programado',
+  flightNumber: '', hora_Salida: '', hora_Llegada: '', estado: 'programado',
   matricula: '', id_Aeropuerto_Origen: 0, id_Aeropuerto_Destino: 0,
 };
 
@@ -27,7 +27,8 @@ const FlightManagementView = () => {
   const [editing, setEditing] = useState<Flight | null>(null);
   const [form, setForm] = useState<FlightCreate>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [changingStatus, setChangingStatus] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -45,6 +46,7 @@ const FlightManagementView = () => {
   const openEdit = (f: Flight) => {
     setEditing(f);
     setForm({
+      flightNumber: f.flightNumber ?? String(f.num_Vuelo),
       hora_Salida: f.hora_Salida.slice(0, 16),
       hora_Llegada: f.hora_Llegada.slice(0, 16),
       estado: f.estado,
@@ -60,7 +62,7 @@ const FlightManagementView = () => {
     setSaving(true);
     try {
       if (editing) {
-        await flightService.update(editing.num_Vuelo, form);
+        await flightService.update(editing.flightNumber ?? String(editing.num_Vuelo), form);
       } else {
         await flightService.create(form);
       }
@@ -73,16 +75,30 @@ const FlightManagementView = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (flightNumber: string) => {
     if (!confirm('¿Eliminar este vuelo?')) return;
-    setDeleting(id);
+    setDeleting(flightNumber);
     try {
-      await flightService.remove(id);
+      await flightService.remove(flightNumber);
       load();
     } catch {
       setError('No se pudo eliminar el vuelo.');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleStatusChange = async (flightNumber: string, newStatus: FlightStatus) => {
+    setChangingStatus(flightNumber);
+    try {
+      await flightService.updateStatus(flightNumber, newStatus);
+      setFlights(prev => prev.map(f =>
+        (f.flightNumber ?? String(f.num_Vuelo)) === flightNumber ? { ...f, estado: newStatus } : f
+      ));
+    } catch {
+      setError('No se pudo cambiar el estado del vuelo.');
+    } finally {
+      setChangingStatus(null);
     }
   };
 
@@ -129,12 +145,27 @@ const FlightManagementView = () => {
                   <td className="small">{new Date(f.hora_Salida).toLocaleString('es-CR')}</td>
                   <td className="small">{new Date(f.hora_Llegada).toLocaleString('es-CR')}</td>
                   <td>{f.matricula}</td>
-                  <td><Badge bg={STATUS_BADGE[f.estado]}>{f.estado}</Badge></td>
+                  <td>
+                    <Form.Select
+                      size="sm"
+                      value={f.estado}
+                      disabled={changingStatus === (f.flightNumber ?? String(f.num_Vuelo))}
+                      style={{ minWidth: '130px' }}
+                      onChange={e => handleStatusChange(
+                        f.flightNumber ?? String(f.num_Vuelo),
+                        e.target.value as FlightStatus
+                      )}
+                    >
+                      {STATUS_OPTIONS.map(s => (
+                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                      ))}
+                    </Form.Select>
+                  </td>
                   <td>
                     <Button variant="outline-dark" size="sm" className="me-2" onClick={() => openEdit(f)}>
                       <i className="bi bi-pencil"></i>
                     </Button>
-                    <Button variant="outline-danger" size="sm" disabled={deleting === f.num_Vuelo} onClick={() => handleDelete(f.num_Vuelo)}>
+                    <Button variant="outline-danger" size="sm" disabled={deleting === (f.flightNumber ?? String(f.num_Vuelo))} onClick={() => handleDelete(f.flightNumber ?? String(f.num_Vuelo))}>
                       <i className="bi bi-trash"></i>
                     </Button>
                   </td>
@@ -151,6 +182,12 @@ const FlightManagementView = () => {
         </Modal.Header>
         <Form onSubmit={handleSave}>
           <Modal.Body>
+            {!editing && (
+              <Form.Group className="mb-3">
+                <Form.Label className="text-muted small text-uppercase fw-bold">Número de Vuelo</Form.Label>
+                <Form.Control className="minimal-input" placeholder="Ej: TA-210" value={form.flightNumber ?? ''} onChange={set('flightNumber')} required={!editing} />
+              </Form.Group>
+            )}
             <Row className="mb-3">
               <Form.Group as={Col} md={6}>
                 <Form.Label className="text-muted small text-uppercase fw-bold">Aeropuerto Origen</Form.Label>

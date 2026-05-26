@@ -125,6 +125,29 @@ namespace TECAir.Core.Services
             return await _flightRepository.GetFlightsByRouteAsync(originAirportId, destinationAirportId);
         }
     
+        /// <inheritdoc />
+        public async Task UpdateFlightStatusAsync(string flightNumber, string status)
+        {
+            var flight = await _flightRepository.GetByFlightNumberAsync(flightNumber)
+                ?? throw new KeyNotFoundException($"No existe el vuelo '{flightNumber}'.");
+
+            var mapped = status.ToLower() switch
+            {
+                "abierto"    => FlightStatus.Boarding,
+                "cerrado"    => FlightStatus.Landed,
+                "cancelado"  => FlightStatus.Cancelled,
+                "delayed"    => FlightStatus.Delayed,
+                "inair"      => FlightStatus.InAir,
+                "boarding"   => FlightStatus.Boarding,
+                "scheduled"  => FlightStatus.Scheduled,
+                "landed"     => FlightStatus.Landed,
+                "cancelled"  => FlightStatus.Cancelled,
+                _            => FlightStatus.Scheduled,
+            };
+
+            await _flightRepository.UpdateStatusAsync(flightNumber, mapped);
+        }
+
         // ── Private helper method ────────────────────────────────────────────
  
         // Construye un FlightResponseDto enriquecido a partir del modelo plano Flight.

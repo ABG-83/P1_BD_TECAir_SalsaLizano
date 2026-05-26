@@ -1,11 +1,35 @@
 import api from './api';
-import type { User, UserRequest } from '../types';
+import type { User, UserRequest, UserRole } from '../types';
 import { mockDb } from '../mocks/data';
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const delay = <T>(data: T): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(data), 300));
+
+const mapRole = (role: string): UserRole => {
+  if (role === 'ADMIN') return 'administrador';
+  return 'cliente';
+};
+
+const mapUser = (u: any): User => ({
+  id_Usuario: u.userId,
+  nombre: u.fullName,
+  correo: u.email,
+  telefono: u.phoneNumber,
+  rol: mapRole(u.role),
+  millas: u.miles,
+  carnet: u.collegeIdNumber || undefined,
+  universidad: u.college || undefined,
+});
+
+const toBackendDto = (dto: UserRequest) => ({
+  fullName: dto.nombre,
+  email: dto.correo,
+  phoneNumber: dto.telefono,
+  collegeIdNumber: dto.carnet ?? '',
+  college: dto.universidad ?? '',
+});
 
 const mock = {
   getAll: () => delay([...mockDb.users]),
@@ -55,22 +79,22 @@ const mock = {
 const real = {
   getAll: async (): Promise<User[]> => {
     const res = await api.get('/users');
-    return res.data;
+    return res.data.map(mapUser);
   },
   getById: async (id: number): Promise<User> => {
     const res = await api.get(`/users/${id}`);
-    return res.data;
+    return mapUser(res.data);
   },
   getByEmail: async (email: string): Promise<User> => {
     const res = await api.get(`/users/by-email?email=${encodeURIComponent(email)}`);
-    return res.data;
+    return mapUser(res.data);
   },
   create: async (dto: UserRequest): Promise<number> => {
-    const res = await api.post('/users', dto);
+    const res = await api.post('/users', toBackendDto(dto));
     return res.data.userId;
   },
   update: async (id: number, dto: UserRequest): Promise<void> => {
-    await api.put(`/users/${id}`, dto);
+    await api.put(`/users/${id}`, toBackendDto(dto));
   },
   remove: async (id: number): Promise<void> => {
     await api.delete(`/users/${id}`);

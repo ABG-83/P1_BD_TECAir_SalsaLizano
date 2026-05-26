@@ -50,6 +50,7 @@ export interface Flight {
 }
 
 export interface FlightCreate {
+  flightNumber?: string;
   hora_Salida: string;
   hora_Llegada: string;
   estado: FlightStatus;
@@ -59,11 +60,13 @@ export interface FlightCreate {
 }
 
 export interface Reservation {
-  cod_Reservacion: number;
+  cod_Reservacion: string;
   fecha: string;
   estado_Pago: PaymentStatus;
   id_Usuario: number;
   num_Vuelo: number;
+  flightNumber?: string;
+  userName?: string;
   vuelo?: Flight;
   usuario?: User;
 }
@@ -84,22 +87,22 @@ export interface BoardingPass {
   asiento: string;
   puerta_Abordaje: string;
   hora_Impresion: string;
-  cod_Reservacion: number;
-  num_Vuelo: number;
+  cod_Reservacion: string;
+  num_Vuelo: string;
 }
 
 export interface Baggage {
   num_Maleta: number;
   peso: number;
   color: string;
-  cod_Reservacion: number;
+  cod_Reservacion: string;
   id_Usuario: number;
 }
 
 export interface BaggageCreate {
   peso: number;
   color: string;
-  cod_Reservacion: number;
+  cod_Reservacion: string;
   id_Usuario: number;
 }
 

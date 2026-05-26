@@ -31,6 +31,17 @@ namespace TECAir.Data.Repositories
         };
 
         /// <summary>
+        /// Maps a reservation row that includes a joined user_name column.
+        /// </summary>
+        private static Reservation MapRowFull(IDataReader r)
+        {
+            var res = MapRow(r);
+            var ord = r.GetOrdinal("user_name");
+            res.UserName = r.IsDBNull(ord) ? null : r.GetString(ord);
+            return res;
+        }
+
+        /// <summary>
         /// Creates and adds a command parameter.
         /// </summary>
         private static void AddParameter(IDbCommand command, string name, object value)
@@ -39,6 +50,54 @@ namespace TECAir.Data.Repositories
             parameter.ParameterName = name;
             parameter.Value = value;
             command.Parameters.Add(parameter);
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<Reservation>> GetAllAsync()
+        {
+            const string query = """
+                SELECT r.reservation_code, r.date, r.payment_state, r.user_id, r.flight_number,
+                       COALESCE(u.full_name, '') AS user_name
+                FROM reservations r
+                LEFT JOIN users u ON r.user_id = u.user_id
+                ORDER BY r.date DESC;
+                """;
+
+            var reservations = new List<Reservation>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+
+            using var reader = await Task.Run(() => command.ExecuteReader());
+            while (reader.Read())
+                reservations.Add(MapRowFull(reader));
+
+            return reservations;
+        }
+
+        /// <inheritdoc />
+        public async Task<IEnumerable<Reservation>> SearchByNameAsync(string name)
+        {
+            const string query = """
+                SELECT r.reservation_code, r.date, r.payment_state, r.user_id, r.flight_number,
+                       COALESCE(u.full_name, '') AS user_name
+                FROM reservations r
+                LEFT JOIN users u ON r.user_id = u.user_id
+                WHERE LOWER(u.full_name) LIKE LOWER(@name)
+                ORDER BY r.date DESC;
+                """;
+
+            var reservations = new List<Reservation>();
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+            AddParameter(command, "@name", $"%{name}%");
+
+            using var reader = await Task.Run(() => command.ExecuteReader());
+            while (reader.Read())
+                reservations.Add(MapRowFull(reader));
+
+            return reservations;
         }
 
         /// <inheritdoc />

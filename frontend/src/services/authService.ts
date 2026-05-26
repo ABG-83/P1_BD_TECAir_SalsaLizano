@@ -21,17 +21,22 @@ const mock = {
   },
 };
 
+const mapRole = (role: string): AuthUser['rol'] => {
+  if (role === 'ADMIN') return 'administrador';
+  return 'cliente';
+};
+
 const real = {
   login: async (credentials: LoginRequest): Promise<AuthUser> => {
     const response = await api.get(`/users/by-email?email=${encodeURIComponent(credentials.correo)}`);
     const user = response.data;
     if (!user) throw new Error('Usuario no encontrado');
     return {
-      id: user.id_Usuario,
-      nombre: user.nombre,
-      correo: user.correo,
-      rol: user.rol,
-      millas: user.millas,
+      id: user.userId,
+      nombre: user.fullName,
+      correo: user.email,
+      rol: mapRole(user.role),
+      millas: user.miles,
     };
   },
 };

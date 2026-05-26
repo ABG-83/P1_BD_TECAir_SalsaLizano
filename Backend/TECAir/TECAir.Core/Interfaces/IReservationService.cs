@@ -15,6 +15,16 @@ namespace TECAir.Core.Interfaces
     public interface IReservationService
     {
         /// <summary>
+        /// Gets all reservations in the system.
+        /// </summary>
+        Task<IEnumerable<ReservationResponseDto>> GetAllReservationsAsync();
+
+        /// <summary>
+        /// Searches reservations by partial user full name.
+        /// </summary>
+        Task<IEnumerable<ReservationResponseDto>> SearchReservationsByNameAsync(string name);
+
+        /// <summary>
         /// Creates a new flight reservation ledger record after executing safety assertions.
         /// </summary>
         Task<ReservationResponseDto> CreateReservationAsync(CreateReservationDto dto);

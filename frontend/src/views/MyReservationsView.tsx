@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Container, Table, Badge, Spinner, Alert, Button } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { reservationService } from '../services/reservationService';
 import type { Reservation } from '../types';
 
@@ -12,15 +13,19 @@ const PAYMENT_BADGE: Record<string, string> = {
 
 const MyReservationsView = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [cancelling, setCancelling] = useState<number | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  const isAdmin = user?.rol === 'administrador';
 
   const load = () => {
     if (!user) return;
     setLoading(true);
-    reservationService.getByUser(user.id)
+    const fetch = isAdmin ? reservationService.getAll() : reservationService.getByUser(user.id);
+    fetch
       .then(setReservations)
       .catch(() => setError('No se pudieron cargar las reservaciones.'))
       .finally(() => setLoading(false));
@@ -28,7 +33,7 @@ const MyReservationsView = () => {
 
   useEffect(load, [user]);
 
-  const handleCancel = async (cod: number) => {
+  const handleCancel = async (cod: string) => {
     if (!confirm('¿Seguro que deseas cancelar esta reservación?')) return;
     setCancelling(cod);
     try {
@@ -71,14 +76,23 @@ const MyReservationsView = () => {
               {reservations.map(r => (
                 <tr key={r.cod_Reservacion}>
                   <td className="fw-bold">#{r.cod_Reservacion}</td>
-                  <td>Vuelo #{r.num_Vuelo}</td>
+                  <td>Vuelo {r.flightNumber ?? `#${r.num_Vuelo}`}</td>
                   <td>{new Date(r.fecha).toLocaleDateString('es-CR')}</td>
                   <td>
                     <Badge bg={PAYMENT_BADGE[r.estado_Pago] ?? 'secondary'}>
                       {r.estado_Pago}
                     </Badge>
                   </td>
-                  <td>
+                  <td className="d-flex gap-2">
+                    {r.estado_Pago === 'pendiente' && (
+                      <Button
+                        variant="dark"
+                        size="sm"
+                        onClick={() => navigate(`/pago?cod=${r.cod_Reservacion}`)}
+                      >
+                        Pagar
+                      </Button>
+                    )}
                     {r.estado_Pago === 'pendiente' && (
                       <Button
                         variant="outline-danger"

@@ -20,6 +20,29 @@ namespace TECAir.API.Controllers
         private readonly IReservationService _reservationService = reservationService;
 
         /// <summary>
+        /// Returns all reservations in the system (admin use).
+        /// </summary>
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ReservationResponseDto>))]
+        public async Task<IActionResult> GetAll()
+        {
+            var results = await _reservationService.GetAllReservationsAsync();
+            return Ok(results);
+        }
+
+        /// <summary>
+        /// Searches reservations by partial passenger name.
+        /// </summary>
+        [HttpGet("search")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ReservationResponseDto>))]
+        public async Task<IActionResult> Search([FromQuery] string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return Ok(Array.Empty<ReservationResponseDto>());
+            var results = await _reservationService.SearchReservationsByNameAsync(name);
+            return Ok(results);
+        }
+
+        /// <summary>
         /// Registers a new travel reservation itinerary entry inside the system ledger.
         /// </summary>
         /// <param name="dto">The client intake data container specifying flight tracking information and passenger identity.</param>

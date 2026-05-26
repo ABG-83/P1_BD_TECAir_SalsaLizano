@@ -14,6 +14,11 @@ namespace TECAir.Data.Interfaces
     public interface IReservationRepository
     {
         /// <summary>
+        /// Gets all reservations in the system.
+        /// </summary>
+        Task<IEnumerable<Reservation>> GetAllAsync();
+
+        /// <summary>
         /// Creates a reservation record and returns the generated reservation code.
         /// </summary>
         Task<string> CreateAsync(Reservation reservation);
@@ -27,6 +32,11 @@ namespace TECAir.Data.Interfaces
         /// Gets all reservations associated with a user identifier.
         /// </summary>
         Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId);
+
+        /// <summary>
+        /// Searches reservations by partial user full name (case-insensitive).
+        /// </summary>
+        Task<IEnumerable<Reservation>> SearchByNameAsync(string name);
 
         /// <summary>
         /// Updates an existing reservation record.

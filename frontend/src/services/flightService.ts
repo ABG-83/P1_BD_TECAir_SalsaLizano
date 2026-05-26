@@ -2,7 +2,7 @@ import api from './api';
 import type { Flight, FlightCreate } from '../types';
 import { mockDb } from '../mocks/data';
 
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'false';
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true';
 
 const delay = <T>(data: T): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(data), 300));
@@ -120,22 +120,22 @@ const mock = {
     return delay(newFlight.num_Vuelo);
   },
 
-  update: (id: number, dto: Partial<FlightCreate>): Promise<void> => {
-    const idx = mockDb.flights.findIndex(f => f.num_Vuelo === id);
+  update: (flightNumber: string, dto: Partial<FlightCreate>): Promise<void> => {
+    const idx = mockDb.flights.findIndex(f => f.flightNumber === flightNumber || String(f.num_Vuelo) === flightNumber);
     if (idx === -1) return Promise.reject(new Error('Not found'));
     mockDb.flights[idx] = { ...mockDb.flights[idx], ...dto };
     return delay(undefined as void);
   },
 
-  updateStatus: (id: number, estado: string): Promise<void> => {
-    const idx = mockDb.flights.findIndex(f => f.num_Vuelo === id);
+  updateStatus: (flightNumber: string, estado: string): Promise<void> => {
+    const idx = mockDb.flights.findIndex(f => f.flightNumber === flightNumber || String(f.num_Vuelo) === flightNumber);
     if (idx === -1) return Promise.reject(new Error('Not found'));
     mockDb.flights[idx] = { ...mockDb.flights[idx], estado: estado as Flight['estado'] };
     return delay(undefined as void);
   },
 
-  remove: (id: number): Promise<void> => {
-    const idx = mockDb.flights.findIndex(f => f.num_Vuelo === id);
+  remove: (flightNumber: string): Promise<void> => {
+    const idx = mockDb.flights.findIndex(f => f.flightNumber === flightNumber || String(f.num_Vuelo) === flightNumber);
     if (idx === -1) return Promise.reject(new Error('Not found'));
     mockDb.flights.splice(idx, 1);
     return delay(undefined as void);
@@ -160,17 +160,33 @@ const real = {
     return res.data.map(mapFlight);
   },
   create: async (dto: FlightCreate): Promise<number> => {
-    const res = await api.post('/flights', dto);
-    return res.data.num_Vuelo ?? res.data;
+    const res = await api.post('/flights', {
+      flightNumber: dto.flightNumber ?? '',
+      departureTime: dto.hora_Salida,
+      arrivalTime: dto.hora_Llegada,
+      airplanePlateNumber: dto.matricula,
+      originAirportId: dto.id_Aeropuerto_Origen,
+      destinationAirportId: dto.id_Aeropuerto_Destino,
+      stopAirportIds: [],
+    });
+    return res.data.flightNumber ?? res.data;
   },
-  update: async (id: number, dto: Partial<FlightCreate>): Promise<void> => {
-    await api.put(`/flights/${id}`, dto);
+  update: async (flightNumber: string, dto: Partial<FlightCreate>): Promise<void> => {
+    await api.put(`/flights/${flightNumber}`, {
+      flightNumber: dto.flightNumber ?? flightNumber,
+      departureTime: dto.hora_Salida,
+      arrivalTime: dto.hora_Llegada,
+      airplanePlateNumber: dto.matricula,
+      originAirportId: dto.id_Aeropuerto_Origen,
+      destinationAirportId: dto.id_Aeropuerto_Destino,
+      stopAirportIds: [],
+    });
   },
-  updateStatus: async (id: number, estado: string): Promise<void> => {
-    await api.patch(`/flights/${id}/status`, { estado });
+  updateStatus: async (flightNumber: string, estado: string): Promise<void> => {
+    await api.patch(`/flights/${flightNumber}/status`, { status: estado });
   },
-  remove: async (id: number): Promise<void> => {
-    await api.delete(`/flights/${id}`);
+  remove: async (flightNumber: string): Promise<void> => {
+    await api.delete(`/flights/${flightNumber}`);
   },
 };
 
