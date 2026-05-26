@@ -1,10 +1,7 @@
 // =============================================================================
-// Archivo  : PromotionResponseDto.cs
-// Capa     : TECAir.Core → DTOs/Promotions
-// Propósito: Define el JSON que la API retorna al consultar promociones.
-//            A diferencia del modelo Promotion (que solo guarda IDs de aeropuertos),
-//            este DTO incluye nombres y ubicaciones de origen y destino para que
-//            el frontend no necesite hacer llamadas adicionales.
+// File    : PromotionResponseDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 namespace TECAir.Core.DTOs.Promotions
@@ -16,18 +13,18 @@ namespace TECAir.Core.DTOs.Promotions
         public DateOnly StartDate { get; set; }
         public DateOnly EndDate { get; set; }
 
-        // Null si la promoción no tiene imagen asociada
+        // Null when the promotion has no associated image.
         public string? Image { get; set; }
         public bool IsActive { get; set; }
 
-        // Aeropuerto de origen enriquecido con nombre y ubicación
+        // Enriched origin airport with name and location.
         public PromotionAirportDto Origin { get; set; } = new();
 
-        // Aeropuerto de destino enriquecido con nombre y ubicación
+        // Enriched destination airport with name and location.
         public PromotionAirportDto Destination { get; set; } = new();
     }
 
-    // Datos resumidos de un aeropuerto dentro de la respuesta de una promoción
+    // Brief airport data included in the promotion response.
     public class PromotionAirportDto
     {
         public int AirportId { get; set; }

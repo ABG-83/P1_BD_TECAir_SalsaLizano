@@ -1,38 +1,54 @@
 // =============================================================================
-// Archivo  : Promotion.cs
-// Capa     : TECAir.Data → Models
-// Propósito: Modelo de dominio que representa una promoción de precio entre
-//            dos aeropuertos. Mapea directamente a la tabla 'promotions' en
-//            PostgreSQL. La imagen es opcional.
+// File    : Promotion.cs
+// Layer   : TECAir.Data → Models
+// Purpose : Represents a price promotion between two airports with a defined validity period.
 // =============================================================================
 
 namespace TECAir.Data.Models
 {
-    // Representa una promoción de precio ofrecida entre dos aeropuertos por un período definido
+    /// <summary>
+    /// Represents a price promotion between two airports.
+    /// </summary>
     public class Promotion
     {
-        // Identificador único auto-generado por la base de datos
+        /// <summary>
+        /// Gets or sets the unique database identifier for the promotion.
+        /// </summary>
         public int PromotionId { get; set; }
 
-        // Precio promocional de la ruta, debe ser mayor a cero
+        /// <summary>
+        /// Gets or sets the promotional price for the route.
+        /// </summary>
         public decimal Price { get; set; }
 
-        // Fecha en que la promoción empieza a estar disponible para los pasajeros
+        /// <summary>
+        /// Gets or sets the date when the promotion becomes available.
+        /// </summary>
         public DateOnly StartDate { get; set; }
 
-        // Fecha en que la promoción expira, debe ser posterior a StartDate
+        /// <summary>
+        /// Gets or sets the expiration date for the promotion.
+        /// </summary>
         public DateOnly EndDate { get; set; }
 
-        // Ruta o URL de la imagen de la promoción, es null cuando no se asoció ninguna imagen
+        /// <summary>
+        /// Gets or sets the optional image path or URL associated with the promotion.
+        /// </summary>
         public string? Image { get; set; }
 
-        // Indica si la promoción está activa y visible para los pasajeros
+        /// <summary>
+        /// Gets or sets a value indicating whether the promotion is currently active.
+        /// </summary>
         public bool IsActive { get; set; } = true;
 
-        // Llave foránea al aeropuerto de origen
+        /// <summary>
+        /// Gets or sets the origin airport identifier for the promotion.
+        /// </summary>
         public int OriginAirportId { get; set; }
 
-        // Llave foránea al aeropuerto de destino
+        /// <summary>
+        /// Gets or sets the destination airport identifier for the promotion.
+        /// </summary>
         public int DestinationAirportId { get; set; }
     }
 }

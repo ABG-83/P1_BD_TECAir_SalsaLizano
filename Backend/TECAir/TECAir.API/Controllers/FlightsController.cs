@@ -1,12 +1,8 @@
 // =============================================================================
-// Archivo  : FlightsController.cs
-// Capa     : TECAir.API → Controllers
-// Propósito: Endpoints REST del Issue #14 — API de gestión de vuelos.
-//            Recibe peticiones HTTP, delega al servicio y retorna la respuesta.
-//            No contiene lógica de negocio ni SQL.
+// File    : FlightsController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for flights operations.
 // =============================================================================
-
-
 
 using Microsoft.AspNetCore.Mvc;
 using TECAir.Core.DTOs.Flights;
@@ -25,7 +21,7 @@ namespace TECAir.API.Controllers
         private readonly IFlightService _flightService = flightService;
 
         // GET /api/flights
-        // Retorna todos los vuelos con su ruta completa enriquecida
+        // Returns all flights with their full enriched route.
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<FlightResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetAll()
@@ -49,23 +45,23 @@ namespace TECAir.API.Controllers
             return Ok(flights);
         }
         // GET /api/flights/{number}
-        // Retorna un vuelo específico con su ruta y escalas. 404 si no existe.
+        // Returns a specific flight with its route and stops. Returns 404 when it does not exist.
         [HttpGet("{number}")]
         [ProducesResponseType(typeof(FlightResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetByNumber(string number)
         {
             var flight = await _flightService.GetFlightByNumberAsync(number);
- 
+
             if (flight is null)
                 return NotFound(new { message = $"No se encontró el vuelo '{number}'." });
- 
+
             return Ok(flight);
         }
- 
+
         // POST /api/flights
-        // Registra un nuevo vuelo con ruta completa.
-        // Body de ejemplo (vuelo con una escala):
+        // Registers a new flight with its full route.
+        // Example body (flight with one stopover):
         // {
         //   "flightNumber":        "TA-210",
         //   "departureTime":       "2026-07-01T08:00:00",
@@ -75,16 +71,16 @@ namespace TECAir.API.Controllers
         //   "destinationAirportId":4,
         //   "stopAirportIds":      [5]
         // }
-        // Para vuelo directo: "stopAirportIds": []
+        // For a direct flight: "stopAirportIds": []
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> Create([FromBody] CreateFlightDto dto)
         {
-            // [ApiController] valida los [Required] del DTO automáticamente antes de llegar aquí
+            // [ApiController] validates the DTO [Required] fields automatically before the action executes.
             await _flightService.CreateFlightAsync(dto);
- 
-            // 201 Created apuntando al vuelo recién creado
+
+            // 201 Created pointing to the newly created flight.
             return CreatedAtAction(
                 actionName: nameof(GetByNumber),
                 routeValues: new { number = dto.FlightNumber },
@@ -93,4 +89,3 @@ namespace TECAir.API.Controllers
         }
     }
 }
-

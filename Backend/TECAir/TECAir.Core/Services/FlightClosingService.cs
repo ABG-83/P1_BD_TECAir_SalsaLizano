@@ -1,17 +1,7 @@
 // =============================================================================
-// Archivo  : FlightClosingService.cs
-// Capa     : TECAir.Core → Services
-// Propósito: Implementa la lógica de negocio para el cierre de vuelos.
-//            Coordina cuatro repositorios: vuelos, check-ins, maletas y usuarios.
-//
-//            Diferencia clave con la apertura (Issue #29):
-//              - Apertura usa reservaciones 'paid' → pasajeros que podrían viajar
-//              - Cierre usa check-ins              → pasajeros que definitivamente viajarán
-//
-//            Reglas de negocio aplicadas:
-//              - Solo se pueden cerrar vuelos en estado 'Boarding'
-//              - La lista oficial solo incluye pasajeros con check-in registrado
-//              - El cargo por maletas sigue la misma regla del Issue #28
+// File    : FlightClosingService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for flightclosing operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.FlightClosing;
@@ -36,14 +26,14 @@ namespace TECAir.Core.Services
 
         // ── Cierre ─────────────────────────────────────────────────────────────
 
-        // Valida el vuelo, lo cambia a 'InAir' y retorna la lista oficial de pasajeros
+        // Validates the flight, changes it to 'InAir', and returns the official passenger list.
         public async Task<FlightClosingDto> CloseFlightAsync(string flightNumber)
         {
             // Verificar que el vuelo exista antes de intentar cerrarlo
             var flight = await _flightRepository.GetByFlightNumberAsync(flightNumber)
                 ?? throw new KeyNotFoundException($"No existe el vuelo '{flightNumber}'.");
 
-            // Solo se pueden cerrar vuelos que estén en estado Boarding
+            // Only flights in the Boarding state can be closed.
             if (flight.Status != FlightStatus.Boarding)
                 throw new InvalidOperationException(
                     $"El vuelo '{flightNumber}' no puede cerrarse porque su estado actual es '{flight.Status}'. " +
@@ -59,7 +49,7 @@ namespace TECAir.Core.Services
 
         // ── Consulta ───────────────────────────────────────────────────────────
 
-        // Retorna la lista oficial sin cambiar el estado, para consulta previa al cierre
+        // Returns the official list without changing the state, for a pre-close review.
         public async Task<FlightClosingDto> GetFinalListAsync(string flightNumber)
         {
             var flight = await _flightRepository.GetByFlightNumberAsync(flightNumber)
@@ -68,10 +58,10 @@ namespace TECAir.Core.Services
             return await BuildFinalListAsync(flight);
         }
 
-        // ── Métodos privados de apoyo ──────────────────────────────────────────
+        // ── Private helper methods ──────────────────────────────────────────
 
         // Construye la lista oficial iterando sobre los check-ins del vuelo.
-        // Cada check-in se enriquece con datos del usuario y conteo de maletas.
+        // Each check-in is enriched with user data and baggage count.
         private async Task<FlightClosingDto> BuildFinalListAsync(Flight flight)
         {
             // Los check-ins representan la lista definitiva: solo quien hizo check-in viaja
@@ -80,13 +70,13 @@ namespace TECAir.Core.Services
 
             foreach (var checkIn in checkIns)
             {
-                // Obtener la reservación para llegar al user_id del pasajero
+                // Retrieve the reservation to resolve the passenger user_id.
                 var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
                 var user = reservation is not null
                     ? await _userRepository.GetByIdAsync(reservation.UserId)
                     : null;
 
-                // Contar las maletas de la reservación asociada a este check-in
+                // Count the baggage entries associated with this check-in reservation.
                 var baggageCount = await _baggageRepository.CountByReservationCodeAsync(checkIn.ReservationCode);
 
                 passengers.Add(new CheckedInPassengerDto
@@ -113,14 +103,14 @@ namespace TECAir.Core.Services
             };
         }
 
-        // Calcula el cargo adicional por maletas según la regla del Issue #28:
-        // 1ra maleta → $0, 2da → $50, 3ra en adelante → $75 cada una
+        // Calculates the additional baggage charge according to issue #28:
+        // 1st baggage → $0, 2nd → $50, 3rd and onward → $75 each.
         private static decimal CalcularCargoPorMaletas(int cantidad)
         {
             if (cantidad <= 1) return 0m;
             if (cantidad == 2) return 50m;
 
-            // Desde la 3ra maleta se cobran $75 por cada una adicional
+            // Starting with the 3rd baggage item, $75 is charged for each additional one.
             return 50m + ((cantidad - 2) * 75m);
         }
     }

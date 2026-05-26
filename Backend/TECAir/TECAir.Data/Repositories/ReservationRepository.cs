@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : ReservationRepository.cs
+// Layer   : TECAir.Data → Repositories
+// Purpose : Implements reservation persistence logic with ADO.NET.
+// =============================================================================
+
 using System.Data;
 using TECAir.Data.Connection;
 using TECAir.Data.Interfaces;
@@ -12,10 +18,8 @@ namespace TECAir.Data.Repositories
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
-        // ── Helpers ────────────────────────────────────────────────────────────
-
         /// <summary>
-        /// Maps a single row from the data reader into a <see cref="Reservation"/> domain object.
+        /// Maps a reservation row into a <see cref="Reservation"/> domain object.
         /// </summary>
         private static Reservation MapRow(IDataReader r) => new()
         {
@@ -27,7 +31,7 @@ namespace TECAir.Data.Repositories
         };
 
         /// <summary>
-        /// Utility helper to abstract and chain parameter creation cleanly.
+        /// Creates and adds a command parameter.
         /// </summary>
         private static void AddParameter(IDbCommand command, string name, object value)
         {
@@ -36,8 +40,6 @@ namespace TECAir.Data.Repositories
             parameter.Value = value;
             command.Parameters.Add(parameter);
         }
-
-        // ── Queries ───────────────────────────────────────────────────────────
 
         /// <inheritdoc />
         public async Task<string> CreateAsync(Reservation reservation)
@@ -87,8 +89,6 @@ namespace TECAir.Data.Repositories
         /// <inheritdoc />
         public async Task<bool> CancelAsync(string reservationCode)
         {
-            // Siguiendo buenas prácticas de negocio aéreo, cancelamos cambiando el estado. 
-            // Si tu base prefiere un DELETE físico, cambialo a: DELETE FROM reservations WHERE...
             const string query = """
                 UPDATE reservations 
                 SET payment_state = 'Failed' 
@@ -104,8 +104,6 @@ namespace TECAir.Data.Repositories
             int rowsAffected = await Task.Run(() => command.ExecuteNonQuery());
             return rowsAffected > 0;
         }
-
-        // ── Queries ────────────────────────────────────────────────────────────
 
         /// <inheritdoc />
         public async Task<Reservation?> GetByCodeAsync(string reservationCode)
@@ -152,7 +150,7 @@ namespace TECAir.Data.Repositories
             return reservations;
         }
 
-        // Retorna solo las reservaciones pagadas de un vuelo, que son los pasajeros confirmados
+        /// <inheritdoc />
         public async Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
@@ -175,8 +173,6 @@ namespace TECAir.Data.Repositories
         /// <inheritdoc />
         public async Task<int> GetActiveCountByFlightNumberAsync(string flightNumber)
         {
-            // Count rows tracking active inventory spaces, filtering out refunded blocks 
-            // so those seats become instantly vacant and available for sale again.
             const string sql = @"
                 SELECT COUNT(*) 
                 FROM reservations 
@@ -187,7 +183,6 @@ namespace TECAir.Data.Repositories
             using var command = connection.CreateCommand();
             command.CommandText = sql;
 
-            // Parameterized bindings matching the real enum mapping rules
             var flightParam = command.CreateParameter();
             flightParam.ParameterName = "@FlightNumber";
             flightParam.Value = flightNumber ?? (object)DBNull.Value;
@@ -195,7 +190,7 @@ namespace TECAir.Data.Repositories
 
             var statusParam = command.CreateParameter();
             statusParam.ParameterName = "@RefundedStatus";
-            statusParam.Value = PaymentStatus.Refunded.ToString(); // Or integer if stored as int in DB
+            statusParam.Value = PaymentStatus.Refunded.ToString();
             command.Parameters.Add(statusParam);
 
             var result = command.ExecuteScalar();

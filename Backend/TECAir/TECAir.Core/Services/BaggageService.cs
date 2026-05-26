@@ -1,16 +1,7 @@
 // =============================================================================
-// Archivo  : BaggageService.cs
-// Capa     : TECAir.Core → Services
-// Propósito: Implementa la lógica de negocio para el registro de maletas.
-//            Coordina tres repositorios: baggage, reservations y check-ins.
-//
-//            Reglas de negocio aplicadas :
-//              - Solo se puede asignar maletas a un pasajero ya chequeado;
-//                se verifica buscando un check-in activo para la reservación
-//              - Tarifa de cobro adicional por maleta:
-//                  Posición 1 → $0.00   (gratis)
-//                  Posición 2 → $50.00
-//                  Posición 3+ → $75.00 por cada una
+// File    : BaggageService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for baggage operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.Baggage;
@@ -33,10 +24,10 @@ namespace TECAir.Core.Services
 
         // ── Registro ───────────────────────────────────────────────────────────
 
-        // Verifica check-in, calcula cobro y persiste la maleta
+        // Validates check-in, calculates the charge, and persists the baggage item.
         public async Task<BaggageResponseDto> AddBaggageAsync(BaggageDto dto)
         {
-            // Verificar que la reservación exista para obtener el user_id requerido por la tabla
+            // Verify that the reservation exists so the required user_id can be retrieved from the table.
             var reservation = await _reservationRepository.GetByCodeAsync(dto.ReservationCode)
                 ?? throw new KeyNotFoundException(
                     $"No existe una reservación con ID {dto.ReservationCode}.");
@@ -48,14 +39,14 @@ namespace TECAir.Core.Services
                     $"El pasajero de la reservación {dto.ReservationCode} no ha realizado check-in. " +
                     "Solo se pueden registrar maletas a pasajeros ya chequeados.");
 
-            // Contar las maletas actuales para determinar la posición de la nueva
+            // Count the current baggage items to determine the position of the new one.
             int currentCount = await _baggageRepository.CountByReservationCodeAsync(dto.ReservationCode);
             int newPosition = currentCount + 1;
 
-            // Calcular el cargo adicional según la tarifa del enunciado
+            // Calculate the additional charge according to the stated rate.
             decimal chargeForThisBag = CalculateChargeForPosition(newPosition);
 
-            // Construir y persistir la maleta con los datos de la tabla existente
+            // Build and persist the baggage item using the current table data.
             var baggage = new Baggage
             {
                 Weight = dto.Weight,
@@ -70,7 +61,7 @@ namespace TECAir.Core.Services
             // Resolver el nombre del pasajero para incluirlo en la respuesta
             var user = await _userRepository.GetByIdAsync(reservation.UserId);
 
-            // Calcular el total acumulado incluyendo la maleta recién registrada
+            // Calculate the total accumulated charge including the newly registered baggage item.
             decimal totalCharge = CalculateTotalCharge(newPosition);
 
             return MapToResponseDto(baggage, user?.FullName ?? "Desconocido", newPosition, chargeForThisBag, totalCharge);
@@ -78,12 +69,12 @@ namespace TECAir.Core.Services
 
         // ── Consultas ──────────────────────────────────────────────────────────
 
-        // Retorna todas las maletas de una reservación con su cobro individual
+        // Returns all baggage items for a reservation with their individual charge.
         public async Task<IEnumerable<BaggageResponseDto>> GetByReservationCodeAsync(string reservationCode)
         {
             var baggages = await _baggageRepository.GetByReservationCodeAsync(reservationCode);
 
-            // Resolver el nombre del pasajero una sola vez para todas las maletas
+            // Resolve the passenger name once for the entire baggage list.
             var reservation = await _reservationRepository.GetByCodeAsync(reservationCode);
             var user = reservation is not null
                                 ? await _userRepository.GetByIdAsync(reservation.UserId)
@@ -93,7 +84,7 @@ namespace TECAir.Core.Services
             var result = new List<BaggageResponseDto>();
             int position = 1;
 
-            // Asignar posición y cobro a cada maleta de la lista
+            // Assign the position and charge to each baggage item in the list.
             foreach (var bag in baggages)
             {
                 decimal chargeForBag = CalculateChargeForPosition(position);
@@ -105,13 +96,13 @@ namespace TECAir.Core.Services
             return result;
         }
 
-        // Busca una maleta por ID y resuelve su posición y cobro dentro de la reservación
+        // Finds a baggage item by ID and resolves its position and charge within the reservation.
         public async Task<BaggageResponseDto?> GetByIdAsync(int baggageId)
         {
             var baggage = await _baggageRepository.GetByIdAsync(baggageId);
             if (baggage is null) return null;
 
-            // Obtener todas las maletas de la reservación para determinar la posición real
+            // Get all baggage items for the reservation to determine the real position.
             var allBags = (await _baggageRepository.GetByReservationCodeAsync(baggage.ReservationCode)).ToList();
             int position = allBags.FindIndex(b => b.BaggageId == baggageId) + 1;
 
@@ -126,9 +117,9 @@ namespace TECAir.Core.Services
             return MapToResponseDto(baggage, user?.FullName ?? "Desconocido", position, chargeForBag, totalCharge);
         }
 
-        // ── Métodos privados de apoyo ──────────────────────────────────────────
+        // ── Private helper methods ──────────────────────────────────────────
 
-        // Cargo adicional para la maleta en la posición indicada: 1ra→$0 | 2da→$50 | 3ra+→$75
+        // Additional charge for the baggage item in the indicated position: 1st → $0 | 2nd → $50 | 3rd+ → $75
         private static decimal CalculateChargeForPosition(int position) => position switch
         {
             1 => 0m,
@@ -136,7 +127,7 @@ namespace TECAir.Core.Services
             _ => 75m
         };
 
-        // Total acumulado para n maletas: n=3→$125  |  n=5→$275
+        // Total accumulated charge for n baggage items: n=3 → $125 | n=5 → $275
         private static decimal CalculateTotalCharge(int totalBags)
         {
             if (totalBags <= 1) return 0m;
@@ -144,7 +135,7 @@ namespace TECAir.Core.Services
             return 50m + (75m * (totalBags - 2));
         }
 
-        // Construye el DTO de respuesta con los datos de la maleta y su cobro calculado
+        // Builds the response DTO with the baggage data and the calculated charge.
         private static BaggageResponseDto MapToResponseDto(
             Baggage baggage,
             string passengerName,

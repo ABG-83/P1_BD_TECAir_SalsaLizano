@@ -1,10 +1,8 @@
 // =============================================================================
-// Archivo  : FlightService.cs
-// Capa     : TECAir.Core → Services
-// Propósito: Implementa la lógica de negocio para el registro de vuelos.
-//            Coordina tres repositorios: vuelos, aviones y aeropuertos.
+// File    : FlightService.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for flight operations.
 // =============================================================================
-
 
 using TECAir.Core.DTOs.Flights;
 using TECAir.Core.Interfaces;
@@ -51,37 +49,37 @@ namespace TECAir.Core.Services
  
         public async Task CreateFlightAsync(CreateFlightDto dto)
         {
-            // Validar que el número de vuelo no esté ya registrado
+            // Validate that the flight number is not already registered.
             var existing = await _flightRepository.GetByFlightNumberAsync(dto.FlightNumber);
             if (existing is not null)
                 throw new InvalidOperationException($"Ya existe un vuelo con el número '{dto.FlightNumber}'.");
  
-            // Validar que el avión exista
+            // Validate that the airplane exists.
             var airplane = await _airplaneRepository.GetByPlateNumberAsync(dto.AirplanePlateNumber)
                 ?? throw new InvalidOperationException($"No existe ningún avión con matrícula '{dto.AirplanePlateNumber}'.");
  
-            // Validar que origen y destino existan en la BD
+            // Validate that the origin and destination exist in the database.
             var origin = await _airportRepository.GetByIdAsync(dto.OriginAirportId)
                 ?? throw new InvalidOperationException($"No existe el aeropuerto de origen con ID {dto.OriginAirportId}.");
  
             var destination = await _airportRepository.GetByIdAsync(dto.DestinationAirportId)
                 ?? throw new InvalidOperationException($"No existe el aeropuerto de destino con ID {dto.DestinationAirportId}.");
  
-            // Validar reglas de negocio
+            // Validate business rules.
             if (dto.OriginAirportId == dto.DestinationAirportId)
                 throw new InvalidOperationException("El aeropuerto de origen y destino no pueden ser el mismo.");
  
             if (dto.ArrivalTime <= dto.DepartureTime)
                 throw new InvalidOperationException("La hora de llegada debe ser posterior a la hora de salida.");
  
-            // Validar que todos los aeropuertos de escala existan antes de insertar nada
+            // Validate that all stopover airports exist before inserting anything.
             foreach (var stopId in dto.StopAirportIds)
             {
                 _ = await _airportRepository.GetByIdAsync(stopId)
                     ?? throw new InvalidOperationException($"No existe el aeropuerto de escala con ID {stopId}.");
             }
  
-            // Insertar el vuelo en la BD
+            // Insert the flight into the database.
             var flight = new Flight
             {
                 FlightNumber         = dto.FlightNumber,
@@ -95,7 +93,7 @@ namespace TECAir.Core.Services
  
             await _flightRepository.CreateAsync(flight);
  
-            // Insertar escalas en orden — el índice + 1 define el StopOrder (1, 2, 3...)
+            // Insert stops in order — the index + 1 defines the StopOrder (1, 2, 3...).
             for (int i = 0; i < dto.StopAirportIds.Count; i++)
             {
                 await _flightRepository.AddStopAsync(new FlightRoute
@@ -127,7 +125,7 @@ namespace TECAir.Core.Services
             return await _flightRepository.GetFlightsByRouteAsync(originAirportId, destinationAirportId);
         }
     
-        // ── Método privado de apoyo ────────────────────────────────────────────
+        // ── Private helper method ────────────────────────────────────────────
  
         // Construye un FlightResponseDto enriquecido a partir del modelo plano Flight.
         // Consulta la BD para resolver los nombres de todos los aeropuertos de la ruta.

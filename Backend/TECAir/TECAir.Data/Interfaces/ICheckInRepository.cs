@@ -1,42 +1,41 @@
 // =============================================================================
-// Archivo  : ICheckInRepository.cs
-// Capa     : TECAir.Data → Interfaces
-// Propósito: Contrato de acceso a datos para la tabla 'check_ins'.
-//
-//            Métodos del Issue #15 (chequeo de pasajeros):
-//              - CreateAsync              → registrar un nuevo check-in
-//              - GetByIdAsync             → obtener un check-in por su ID
-//              - GetByReservationIdAsync  → verificar si una reservación ya
-//                                           tiene check-in (evitar duplicados)
-//              - GetByFlightNumberAsync   → listar check-ins de un vuelo
-//              - IsSeatTakenAsync         → verificar disponibilidad de asiento
+// File    : ICheckInRepository.cs
+// Layer   : TECAir.Data → Interfaces
+// Purpose : Defines the data access contract for check-in records.
 // =============================================================================
 
 using TECAir.Data.Models;
 
 namespace TECAir.Data.Interfaces
 {
-    // Contrato que deben cumplir todas las implementaciones del repositorio de check-ins
+    /// <summary>
+    /// Defines data access operations for check-in records.
+    /// </summary>
     public interface ICheckInRepository
     {
-        // Inserta un nuevo registro de check-in en la base de datos.
-        // Retorna el ID generado por la BD para el nuevo check-in.
+        /// <summary>
+        /// Creates a check-in record and returns the generated identifier.
+        /// </summary>
         Task<int> CreateAsync(CheckIn checkIn);
 
-        // Busca un check-in por su ID primario. Retorna null si no existe.
+        /// <summary>
+        /// Gets a check-in by its identifier, or returns null when no match exists.
+        /// </summary>
         Task<CheckIn?> GetByIdAsync(int checkInId);
 
-        // Busca el check-in asociado a una reservación específica.
-        // Retorna null si el pasajero aún no ha hecho check-in.
-        // Se usa para detectar check-ins duplicados antes de crear uno nuevo.
+        /// <summary>
+        /// Gets the check-in associated with a reservation code, or returns null when none exists.
+        /// </summary>
         Task<CheckIn?> GetByReservationCodeAsync(string reservationCode);
 
-        // Retorna todos los check-ins registrados para un vuelo.
-        // Útil para listar los pasajeros ya chequeados en un vuelo.
+        /// <summary>
+        /// Gets all check-ins registered for a flight.
+        /// </summary>
         Task<IEnumerable<CheckIn>> GetByFlightNumberAsync(string flightNumber);
 
-        // Verifica si un asiento ya está ocupado en un vuelo determinado.
-        // Retorna true si el asiento ya fue asignado a otro pasajero.
+        /// <summary>
+        /// Determines whether a seat is already occupied on a flight.
+        /// </summary>
         Task<bool> IsSeatTakenAsync(string flightNumber, string seat);
     }
 }

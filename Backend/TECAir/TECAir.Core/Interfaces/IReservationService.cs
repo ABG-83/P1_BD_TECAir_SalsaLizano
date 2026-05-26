@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : IReservationService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for reservation operations.
+// =============================================================================
+
 using TECAir.Data.Models;
 using TECAir.Core.DTOs.Reservations;
 

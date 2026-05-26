@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : Payment.Service.cs
+// Layer   : TECAir.Core → Services
+// Purpose : Contains business logic for payment. operations.
+// =============================================================================
+
 using TECAir.Data.Interfaces;
 using TECAir.Data.Models;
 using TECAir.Core.DTOs.Payments;

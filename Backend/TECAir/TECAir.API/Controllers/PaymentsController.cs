@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : PaymentsController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for payments operations.
+// =============================================================================
+
 using Microsoft.AspNetCore.Mvc;
 using TECAir.Core.DTOs.Payments;
 using TECAir.Core.Interfaces;

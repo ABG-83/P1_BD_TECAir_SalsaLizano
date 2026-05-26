@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : AirportRepository.cs
+// Layer   : TECAir.Data → Repositories
+// Purpose : Implements airport lookup logic with ADO.NET.
+// =============================================================================
+
 using System.Data;
 using TECAir.Data.Connection;
 using TECAir.Data.Interfaces;
@@ -8,18 +14,12 @@ namespace TECAir.Data.Repositories
     /// <summary>
     /// SQL-backed implementation of <see cref="IAirportRepository"/> using native ADO.NET.
     /// </summary>
-    /// <remarks>
-    /// Initializes a new instance of the <see cref="AirportRepository"/> class.
-    /// </remarks>
-    /// <param name="connectionFactory">The factory responsible for generating database connections.</param>
     public class AirportRepository(IDbConnectionFactory connectionFactory) : IAirportRepository
     {
         private readonly IDbConnectionFactory _connectionFactory = connectionFactory;
 
-        // ── Helpers ────────────────────────────────────────────────────────────
-
         /// <summary>
-        /// Maps a single row from the data reader into an <see cref="Airport"/> domain object.
+        /// Maps a data reader row into an <see cref="Airport"/> domain object.
         /// </summary>
         private static Airport MapRow(IDataReader r) => new()
         {
@@ -27,8 +27,6 @@ namespace TECAir.Data.Repositories
             Name = r.GetString(r.GetOrdinal("name")),
             Location = r.GetString(r.GetOrdinal("location"))
         };
-
-        // ── Queries ────────────────────────────────────────────────────────────
 
         /// <inheritdoc />
         public async Task<IEnumerable<Airport>> GetAllAsync()

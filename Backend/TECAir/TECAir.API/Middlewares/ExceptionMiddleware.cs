@@ -1,3 +1,9 @@
+// =============================================================================
+// File    : ExceptionMiddleware.cs
+// Layer   : TECAir.API → Middlewares
+// Purpose : Contains request pipeline middleware for cross-cutting behavior.
+// =============================================================================
+
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 

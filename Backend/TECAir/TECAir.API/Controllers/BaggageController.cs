@@ -1,15 +1,7 @@
 // =============================================================================
-// Archivo  : BaggageController.cs
-// Capa     : TECAir.API → Controllers
-// Propósito: Endpoints REST del Issue #16 — API de maletas.
-//            Permite a los funcionarios del aeropuerto registrar maletas y
-//            asignarlas a pasajeros ya chequeados.
-//            No contiene lógica de negocio ni SQL; delega al servicio.
-//
-//            Endpoints expuestos:
-//              POST /api/baggage                              → registrar maleta
-//              GET  /api/baggage/{id}                         → consultar maleta por ID
-//              GET  /api/baggage/reservation/{reservationId}  → maletas de una reservación
+// File    : BaggageController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for baggage operations.
 // =============================================================================
 
 using Microsoft.AspNetCore.Mvc;
@@ -25,9 +17,9 @@ namespace TECAir.API.Controllers
         private readonly IBaggageService _baggageService = baggageService;
 
         // POST /api/baggage
-        // Registra una maleta y la asigna al pasajero de la reservación indicada.
-        // Valida que el pasajero ya haya hecho check-in antes de aceptar la maleta.
-        // Body de ejemplo:
+        // Registers a baggage item and assigns it to the passenger for the specified reservation.
+        // Validates that the passenger has already checked in before accepting the baggage item.
+        // Example body:
         // {
         //   "reservationId": 5,
         //   "weight": 23.5,
@@ -39,10 +31,10 @@ namespace TECAir.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddBaggage([FromBody] BaggageDto dto)
         {
-            // [ApiController] valida los [Required] del DTO antes de llegar aquí
+            // [ApiController] validates the DTO [Required] fields before the action executes.
             var result = await _baggageService.AddBaggageAsync(dto);
 
-            // 201 Created apuntando a la maleta recién registrada
+            // 201 Created pointing to the newly registered baggage item.
             return CreatedAtAction(
                 actionName: nameof(GetById),
                 routeValues: new { id = result.BaggageId },
@@ -51,8 +43,8 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/baggage/{id}
-        // Retorna los datos de una maleta con su cobro individual.
-        // Devuelve 404 si la maleta no existe.
+        // Returns the baggage data together with its individual charge.
+        // Returns 404 when the baggage item does not exist.
         [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(BaggageResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -67,8 +59,8 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/baggage/reservation/{reservationCode}
-        // Retorna todas las maletas de un pasajero con el desglose completo de cobros.
-        // Permite al funcionario ver el total acumulado de cargos adicionales.
+        // Returns all baggage items for a passenger with the full charge breakdown.
+        // Allows the staff member to review the total accumulated additional charges.
         [HttpGet("reservation/{reservationCode}")]
         [ProducesResponseType(typeof(IEnumerable<BaggageResponseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetByReservation(string reservationCode)

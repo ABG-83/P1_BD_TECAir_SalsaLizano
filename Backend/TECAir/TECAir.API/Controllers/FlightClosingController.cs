@@ -1,14 +1,7 @@
 // =============================================================================
-// Archivo  : FlightClosingController.cs
-// Capa     : TECAir.API → Controllers
-// Propósito: Endpoints REST del Issue #30 — Cierre de vuelos.
-//            Permite a los funcionarios del aeropuerto cerrar un vuelo y obtener
-//            la lista oficial final de pasajeros con check-in y sus maletas.
-//            No contiene lógica de negocio; delega completamente al servicio.
-//
-//            Endpoints expuestos:
-//              PUT  /api/flight-closing/{flightNumber}/close      → cierra el vuelo
-//              GET  /api/flight-closing/{flightNumber}/final-list → consulta la lista final
+// File    : FlightClosingController.cs
+// Layer   : TECAir.API → Controllers
+// Purpose : Exposes HTTP endpoints for flightclosing operations.
 // =============================================================================
 
 using Microsoft.AspNetCore.Mvc;
@@ -24,7 +17,7 @@ namespace TECAir.API.Controllers
 
         // PUT /api/flight-closing/{flightNumber}/close
         // Cambia el estado del vuelo a 'InAir' y retorna la lista oficial de pasajeros con check-in.
-        // Solo funciona si el vuelo está en estado 'Boarding'.
+        // Only works when the flight is in the 'Boarding' state.
         [HttpPut("{flightNumber}/close")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -36,8 +29,8 @@ namespace TECAir.API.Controllers
         }
 
         // GET /api/flight-closing/{flightNumber}/final-list
-        // Retorna la lista oficial de pasajeros con check-in sin cambiar el estado del vuelo.
-        // Útil para revisar quiénes tienen check-in antes de confirmar el cierre.
+        // Returns the official passenger list with check-in without changing the flight status.
+        // Useful for reviewing who has checked in before confirming the closure.
         [HttpGet("{flightNumber}/final-list")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

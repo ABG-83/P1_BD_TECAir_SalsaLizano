@@ -1,55 +1,53 @@
 // =============================================================================
-// Archivo  : FlightManifestDto.cs
-// Capa     : TECAir.Core → DTOs/FlightOpening
-// Propósito: Define el JSON que retorna el endpoint de apertura de vuelo.
-//            Contiene el resumen del vuelo y la lista de pasajeros confirmados
-//            con su conteo de maletas para facilitar la carga y balance del avión.
+// File    : FlightManifestDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 namespace TECAir.Core.DTOs.FlightOpening
 {
-    // Respuesta completa del manifiesto de apertura de un vuelo
+    // Full response for the flight opening manifest.
     public class FlightManifestDto
     {
-        // Número de vuelo abierto
+        // Opened flight number
         public string FlightNumber { get; set; } = string.Empty;
 
-        // Nuevo estado del vuelo después de la apertura (siempre 'Boarding')
+        // New flight status after opening (always 'Boarding').
         public string Status { get; set; } = string.Empty;
 
-        // Hora de salida programada del vuelo
+        // Scheduled departure time of the flight.
         public DateTime DepartureTime { get; set; }
 
-        // Hora de llegada programada del vuelo
+        // Scheduled arrival time of the flight.
         public DateTime ArrivalTime { get; set; }
 
-        // Total de pasajeros confirmados (reservaciones pagadas)
+        // Total confirmed passengers (paid reservations)
         public int TotalPassengers { get; set; }
 
-        // Total de maletas de todos los pasajeros confirmados
+        // Total baggage count for all confirmed passengers
         public int TotalBaggages { get; set; }
 
-        // Lista detallada de cada pasajero confirmado con su equipaje
+        // Detailed list of each confirmed passenger and their baggage.
         public List<PassengerManifestItemDto> Passengers { get; set; } = [];
     }
 
-    // Representa a un pasajero individual dentro del manifiesto del vuelo
+    // Represents an individual passenger inside the flight manifest.
     public class PassengerManifestItemDto
     {
-        // ID de la reservación del pasajero
+        // Passenger reservation ID.
         public string ReservationCode { get; set; } = string.Empty;
 
-        // Nombre completo del pasajero
+        // Full name of the passenger.
         public string FullName { get; set; } = string.Empty;
 
-        // Correo electrónico de contacto del pasajero
+        // Contact email address of the passenger.
         public string Email { get; set; } = string.Empty;
 
-        // Cantidad de maletas registradas para esta reservación
+        // Number of baggage items registered for this reservation.
         public int BaggageCount { get; set; }
 
-        // Cargo adicional por maletas extra según la regla de negocio:
-        // 1ra gratis, 2da $50, 3ra en adelante $75 c/u
+        // Additional charge for extra baggage items according to the business rule:
+        // 1st is free, 2nd is $50, 3rd and onward is $75 each.
         public decimal BaggageSurcharge { get; set; }
     }
 }

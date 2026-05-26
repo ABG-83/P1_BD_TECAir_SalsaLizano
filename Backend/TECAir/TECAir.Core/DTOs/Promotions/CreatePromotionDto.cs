@@ -1,10 +1,7 @@
 // =============================================================================
-// Archivo  : CreatePromotionDto.cs
-// Capa     : TECAir.Core → DTOs/Promotions
-// Propósito: Define el cuerpo JSON que el cliente envía al POST /api/promotions
-//            para registrar una nueva promoción entre dos aeropuertos.
-//            La imagen es opcional; is_active se establece en TRUE por defecto
-//            en el servicio sin necesidad de que el cliente lo envíe.
+// File    : CreatePromotionDto.cs
+// Layer   : TECAir.Core → DTOs
+// Purpose : Defines request and response payloads used by the application.
 // =============================================================================
 
 using System.ComponentModel.DataAnnotations;
@@ -13,7 +10,7 @@ namespace TECAir.Core.DTOs.Promotions
 {
     public class CreatePromotionDto
     {
-        // Precio promocional de la ruta, debe ser mayor a 0
+        // Promotional route price. Must be greater than 0.
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a cero.")]
         public decimal Price { get; set; }
@@ -21,20 +18,20 @@ namespace TECAir.Core.DTOs.Promotions
         [Required]
         public DateOnly StartDate { get; set; }
 
-        // Debe ser posterior a StartDate, validado en el servicio
+        // Must be later than StartDate and validated by the service.
         [Required]
         public DateOnly EndDate { get; set; }
 
-        // Ruta de imagen o URL, campo opcional que puede omitirse en el JSON
+        // Image path or URL. Optional field and can be omitted from the JSON payload.
         [MaxLength(300)]
         public string? Image { get; set; }
 
-        // ID del aeropuerto de origen de la promoción
+        // Origin airport ID for the promotion.
         [Required]
         [Range(1, int.MaxValue)]
         public int OriginAirportId { get; set; }
 
-        // ID del aeropuerto de destino de la promoción
+        // Destination airport ID for the promotion.
         [Required]
         [Range(1, int.MaxValue)]
         public int DestinationAirportId { get; set; }

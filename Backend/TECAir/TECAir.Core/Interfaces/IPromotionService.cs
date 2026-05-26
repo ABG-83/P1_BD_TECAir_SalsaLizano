@@ -1,34 +1,32 @@
 // =============================================================================
-// Archivo  : IPromotionService.cs
-// Capa     : TECAir.Core → Interfaces
-// Propósito: Contrato de lógica de negocio para la gestión de promociones.
-//            Separa la capa de servicios del controlador y permite mockear
-//            en pruebas unitarias sin depender de la base de datos.
+// File    : IPromotionService.cs
+// Layer   : TECAir.Core → Interfaces
+// Purpose : Defines contracts for promotion operations.
 // =============================================================================
 
 using TECAir.Core.DTOs.Promotions;
 
 namespace TECAir.Core.Interfaces
 {
-    // Contrato que deben cumplir todas las implementaciones del servicio de promociones
+    // Contract that every promotion service implementation must satisfy.
     public interface IPromotionService
     {
-        // Obtiene todas las promociones (activas e inactivas) para la vista de administrador
+        // Gets all promotions, active and inactive, for the admin view.
         Task<IEnumerable<PromotionResponseDto>> GetAllPromotionsAsync();
 
-        // Obtiene solo las promociones activas para el área de promociones de la vista cliente
+        // Gets only the active promotions for the client promotions area.
         Task<IEnumerable<PromotionResponseDto>> GetActivePromotionsAsync();
 
-        // Busca una promoción por su ID, retorna null si no existe
+        // Finds a promotion by its ID and returns null when it does not exist.
         Task<PromotionResponseDto?> GetPromotionByIdAsync(int promotionId);
 
-        // Valida las reglas de negocio y registra una nueva promoción, retorna el ID generado
+        // Validates the business rules and registers a new promotion, returning the generated ID.
         Task<int> CreatePromotionAsync(CreatePromotionDto dto);
 
-        // Valida y actualiza todos los campos de una promoción existente
+        // Validates and updates all fields of an existing promotion.
         Task UpdatePromotionAsync(int promotionId, UpdatePromotionDto dto);
 
-        // Elimina permanentemente una promoción por su ID
+        // Deletes a promotion permanently by its ID.
         Task DeletePromotionAsync(int promotionId);
     }
 }
