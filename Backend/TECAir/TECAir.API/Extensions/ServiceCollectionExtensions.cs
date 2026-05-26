@@ -50,6 +50,7 @@ namespace TECAir.API.Extensions
             services.AddScoped<IBaggageService, BaggageService>();          // Issue #16
             services.AddScoped<IFlightClosingService, FlightClosingService>();         // Issue #30
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IReservationService, ReservationService>();
 
             return services;
         }

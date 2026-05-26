@@ -29,7 +29,9 @@ namespace TECAir.Data.Repositories
             Status = Enum.Parse<FlightStatus>(r.GetString(r.GetOrdinal("status"))),
             AirplanePlateNumber = r.GetString(r.GetOrdinal("airplane_plate_number")),
             OriginAirportId = r.GetInt32(r.GetOrdinal("origin_airport_id")),
-            DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id"))
+            DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id")),
+            OriginAirportName = r.GetString(r.GetOrdinal("origin_airport_name")),
+            DestinationAirportName = r.GetString(r.GetOrdinal("destination_airport_name"))
         };
 
         /// <summary>
@@ -57,10 +59,14 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Flight>> GetAllAsync()
         {
             const string sql = """
-                SELECT flight_number, departure_time, arrival_time, status,
-                       airplane_plate_number, origin_airport_id, destination_airport_id
-                FROM flights
-                ORDER BY departure_time ASC;
+                    SELECT f.flight_number, f.departure_time, f.arrival_time, f.status,
+                    f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
+                    a1.name AS origin_airport_name, 
+                    a2.name AS destination_airport_name
+                FROM flights f
+                LEFT JOIN airports a1 ON f.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON f.destination_airport_id = a2.airport_id
+                ORDER BY f.departure_time ASC;
                 """;
 
             var flights = new List<Flight>();
@@ -188,12 +194,16 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId)
         {
             const string query = """
-                SELECT flight_number, departure_time, arrival_time, status, 
-                       airplane_plate_number, origin_airport_id, destination_airport_id
-                FROM flights
-                WHERE origin_airport_id = @originId 
-                  AND destination_airport_id = @destinationId
-                ORDER BY departure_time ASC;
+                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status, 
+                    f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
+                    a1.name AS origin_airport_name, 
+                    a2.name AS destination_airport_name
+                FROM flights f
+                LEFT JOIN airports a1 ON f.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON f.destination_airport_id = a2.airport_id
+                WHERE f.origin_airport_id = @originId 
+                AND f.destination_airport_id = @destinationId
+                ORDER BY f.departure_time ASC;
                 """;
 
             var flights = new List<Flight>();

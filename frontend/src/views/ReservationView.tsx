@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Alert, Button, Modal } from 'react-bootstrap';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import FlightCard from '../components/FlightCard';
-import { reservationService } from '../services/reservationService';
+import { useReservation } from '../hooks/useReservation';
 import { useAuth } from '../context/AuthContext';
 import { useFlights } from '../hooks/useFlights';
 import type { Flight } from '../types';
@@ -11,10 +11,12 @@ const ReservationView = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
+
   const { flights, loading, error: searchError, searchFlights } = useFlights();
+  const { createReservation, loading: reserving } = useReservation();
+
   const [reservationError, setReservationError] = useState('');
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
-  const [reserving, setReserving] = useState(false);
   const [success, setSuccess] = useState('');
 
   const origen = searchParams.get('origen') ?? '';
@@ -24,11 +26,21 @@ const ReservationView = () => {
   useEffect(() => {
     setReservationError('');
     setSuccess('');
-    searchFlights({
-      origen: origen ? Number(origen) : undefined,
-      destino: destino ? Number(destino) : undefined,
-      fecha: fecha || undefined,
-    }).catch(() => undefined);
+
+    // Prevenimos enviar ceros o valores nulos que rompan la validación de C# (Int32)
+    const originId = origen ? Number(origen) : undefined;
+    const destinationId = destino ? Number(destino) : undefined;
+
+    // Solo disparamos la petición si los IDs son numéricamente válidos
+    if (originId && destinationId) {
+      searchFlights({
+        origen: originId,
+        destino: destinationId,
+        fecha: fecha || undefined,
+      }).catch((err) => {
+        console.error("Error capturado en la vista de reservación:", err);
+      });
+    }
   }, [origen, destino, fecha, searchFlights]);
 
   const handleReserve = (flightId: number) => {
@@ -44,19 +56,20 @@ const ReservationView = () => {
   const confirmReservation = async () => {
     if (!selectedFlight || !user) return;
 
-    setReserving(true);
+    setReservationError('');
     try {
-      const cod = await reservationService.create({
+      // Consumo directo de la acción expuesta por el Hook
+      const cod = await createReservation({
         id_Usuario: user.id,
         flightNumber: selectedFlight.flightNumber,
         num_Vuelo: selectedFlight.num_Vuelo,
       });
+
       setSuccess(`¡Reservación #${cod} confirmada! Revisa tus reservaciones.`);
       setSelectedFlight(null);
-    } catch {
-      setReservationError('No se pudo completar la reservación.');
-    } finally {
-      setReserving(false);
+    } catch (err: any) {
+      const msg = err.response?.data?.title || 'No se pudo completar la reservación en el sistema central de TECAir.';
+      setReservationError(msg);
     }
   };
 
@@ -101,7 +114,7 @@ const ReservationView = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setSelectedFlight(null)}>Cancelar</Button>
+          <Button variant="outline-secondary" onClick={() => setSelectedFlight(null)} disabled={reserving}>Cancelar</Button>
           <Button variant="dark" onClick={confirmReservation} disabled={reserving}>
             {reserving ? 'Procesando...' : 'Confirmar'}
           </Button>

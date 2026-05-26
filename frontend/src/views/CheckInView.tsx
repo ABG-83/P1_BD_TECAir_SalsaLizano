@@ -1,31 +1,26 @@
 import { useState } from 'react';
 import { Container, Form, Button, Alert, Card } from 'react-bootstrap';
-import { checkInService } from '../services/checkInService';
-import type { BoardingPass } from '../types';
+import useCheckIn from '../hooks/useCheckIn'; 
 
 const CheckInView = () => {
   const [codReservacion, setCodReservacion] = useState('');
   const [apellidos, setApellidos] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [boardingPass, setBoardingPass] = useState<BoardingPass | null>(null);
 
-  const handleSubmit = async (e: { preventDefault(): void }) => {
+  const { boardingPass, loading, error, executeCheckIn, resetCheckIn } = useCheckIn();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setBoardingPass(null);
-    setLoading(true);
-    try {
-      const pass = await checkInService.doCheckIn(Number(codReservacion), apellidos);
-      setBoardingPass(pass);
-    } catch {
-      setError('No se encontró la reservación. Verifica el código y los apellidos.');
-    } finally {
-      setLoading(false);
-    }
+    // Invocamos la rutina encadenada pasando los parámetros requeridos
+    await executeCheckIn(Number(codReservacion), apellidos);
   };
 
-  if (boardingPass) {
+  const handleReset = () => {
+    resetCheckIn();
+    setCodReservacion('');
+    setApellidos('');
+  };
+
+ if (boardingPass) {
     return (
       <Container className="py-5 d-flex justify-content-center">
         <div className="w-100" style={{ maxWidth: '500px' }}>
@@ -53,11 +48,13 @@ const CheckInView = () => {
               </div>
               <div className="d-flex justify-content-between">
                 <span className="text-muted">Impreso</span>
-                <span className="fw-bold">{new Date(boardingPass.hora_Impresion).toLocaleString('es-CR')}</span>
+                <span className="fw-bold">
+                  {new Date(boardingPass.hora_Impresion).toLocaleString('es-CR')}
+                </span>
               </div>
             </Card.Body>
           </Card>
-          <Button variant="outline-dark" className="w-100 mt-4" onClick={() => { setBoardingPass(null); setCodReservacion(''); setApellidos(''); }}>
+          <Button variant="outline-dark" className="w-100 mt-4" onClick={handleReset}>
             Nuevo Check-in
           </Button>
         </div>
@@ -71,7 +68,7 @@ const CheckInView = () => {
         <h3 className="mb-4 fw-bold text-center">Pre-Chequeo</h3>
         <p className="text-muted text-center mb-4">Ingresa tus datos para obtener tu pase de abordar.</p>
 
-        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+        {error && <Alert variant="danger" className="py-2 text-center">{error}</Alert>}
 
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-4" controlId="reservationCode">

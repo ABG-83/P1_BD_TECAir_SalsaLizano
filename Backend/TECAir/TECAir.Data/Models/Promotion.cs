@@ -50,5 +50,8 @@ namespace TECAir.Data.Models
         /// Gets or sets the destination airport identifier for the promotion.
         /// </summary>
         public int DestinationAirportId { get; set; }
+
+        public string? OriginAirportName { get; set; }
+        public string? DestinationAirportName { get; set; }
     }
 }

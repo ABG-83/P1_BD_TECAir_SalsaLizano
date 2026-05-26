@@ -30,7 +30,10 @@ namespace TECAir.Data.Repositories
             Image = r.IsDBNull(r.GetOrdinal("image")) ? null : r.GetString(r.GetOrdinal("image")),
             IsActive = r.GetBoolean(r.GetOrdinal("is_active")),
             OriginAirportId = r.GetInt32(r.GetOrdinal("origin_airport_id")),
-            DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id"))
+            DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id")),
+
+            OriginAirportName = r.IsDBNull(r.GetOrdinal("origin_airport_name")) ? null : r.GetString(r.GetOrdinal("origin_airport_name")),
+            DestinationAirportName = r.IsDBNull(r.GetOrdinal("destination_airport_name")) ? null : r.GetString(r.GetOrdinal("destination_airport_name"))
         };
 
         /// <summary>
@@ -48,10 +51,14 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Promotion>> GetAllAsync()
         {
             const string sql = """
-                SELECT promotion_id, price, start_date, end_date, image,
-                       is_active, origin_airport_id, destination_airport_id
-                FROM promotions
-                ORDER BY start_date DESC;
+                SELECT p.promotion_id, p.price, p.start_date, p.end_date, p.image, p.is_active, 
+                    p.origin_airport_id, p.destination_airport_id,
+                    a1.name AS origin_airport_name, 
+                    a2.name AS destination_airport_name
+                FROM promotions p
+                LEFT JOIN airports a1 ON p.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON p.destination_airport_id = a2.airport_id
+                ORDER BY p.start_date DESC;
                 """;
 
             var promotions = new List<Promotion>();
@@ -70,11 +77,15 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Promotion>> GetActiveAsync()
         {
             const string sql = """
-                SELECT promotion_id, price, start_date, end_date, image,
-                       is_active, origin_airport_id, destination_airport_id
-                FROM promotions
-                WHERE is_active = TRUE
-                ORDER BY start_date DESC;
+                SELECT p.promotion_id, p.price, p.start_date, p.end_date, p.image, p.is_active, 
+                    p.origin_airport_id, p.destination_airport_id,
+                    a1.name AS origin_airport_name, 
+                    a2.name AS destination_airport_name
+                FROM promotions p
+                LEFT JOIN airports a1 ON p.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON p.destination_airport_id = a2.airport_id
+                WHERE p.is_active = TRUE
+                ORDER BY p.start_date DESC;
                 """;
 
             var promotions = new List<Promotion>();
@@ -93,10 +104,14 @@ namespace TECAir.Data.Repositories
         public async Task<Promotion?> GetByIdAsync(int promotionId)
         {
             const string sql = """
-                SELECT promotion_id, price, start_date, end_date, image,
-                       is_active, origin_airport_id, destination_airport_id
-                FROM promotions
-                WHERE promotion_id = @promotionId;
+                SELECT p.promotion_id, p.price, p.start_date, p.end_date, p.image, p.is_active, 
+                    p.origin_airport_id, p.destination_airport_id,
+                    a1.name AS origin_airport_name, 
+                    a2.name AS destination_airport_name
+                FROM promotions p
+                LEFT JOIN airports a1 ON p.origin_airport_id = a1.airport_id
+                LEFT JOIN airports a2 ON p.destination_airport_id = a2.airport_id
+                WHERE p.promotion_id = @promotionId;
                 """;
 
             using var connection = await _connectionFactory.CreateConnectionAsync();

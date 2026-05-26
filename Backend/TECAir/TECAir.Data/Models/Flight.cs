@@ -69,5 +69,9 @@ namespace TECAir.Data.Models
         /// Gets or sets the destination airport identifier.
         /// </summary>
         public int DestinationAirportId { get; set; }
+
+        public string OriginAirportName { get; set; } = string.Empty;
+
+        public string DestinationAirportName { get; set; } = string.Empty;
     }
 }
