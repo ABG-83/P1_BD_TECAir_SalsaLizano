@@ -53,6 +53,12 @@ export default function SearchFlightsScreen() {
     if (selected) setFecha(selected);
   };
 
+  const handleWebDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      setFecha(new Date(e.target.value + 'T12:00:00')); // T12:00:00 previene desajustes de zona horaria local
+    }
+  };
+
   const fechaStr = fecha ? fecha.toISOString().split('T')[0] : '';
   const fechaDisplay = fecha
     ? fecha.toLocaleDateString('es-CR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -137,25 +143,49 @@ export default function SearchFlightsScreen() {
               </TouchableOpacity>
 
               <Text style={styles.label}>FECHA DE SALIDA</Text>
-              <TouchableOpacity
-                style={styles.selectBtn}
-                onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.selectText, !fecha && styles.selectPlaceholder]}>
-                  {fechaDisplay}
-                </Text>
-                <Text style={styles.chevron}>📅</Text>
-              </TouchableOpacity>
-
-              {showDatePicker && (
-                <DateTimePicker
-                  value={fecha ?? new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  minimumDate={new Date()}
-                  onChange={onDateChange}
+              {Platform.OS === 'web' ? (
+                <input
+                  type="date"
+                  style={{
+                    border: 'none',
+                    borderBottom: `1px solid ${theme.colors.border}`,
+                    fontSize: 16,
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    marginBottom: 20,
+                    color: theme.colors.textDark,
+                    outline: 'none',
+                    width: '100%',
+                    backgroundColor: 'transparent',
+                    fontFamily: 'inherit',
+                  }}
+                  min={new Date().toISOString().split('T')[0]}
+                  value={fechaStr}
+                  onChange={handleWebDateChange}
                 />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.selectBtn}
+                    onPress={() => setShowDatePicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.selectText, !fecha && styles.selectPlaceholder]}>
+                      {fechaDisplay}
+                    </Text>
+                    <Text style={styles.chevron}>📅</Text>
+                  </TouchableOpacity>
+
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={fecha ?? new Date()}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      minimumDate={new Date()}
+                      onChange={onDateChange}
+                    />
+                  )}
+                </>
               )}
 
               <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>

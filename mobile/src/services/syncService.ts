@@ -1,5 +1,6 @@
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
+import { Platform } from 'react-native';
 import {
   getPendingReservations,
   updateReservationSyncStatus,
@@ -9,7 +10,7 @@ import {
   getFlightNumberById,
 } from '../database/db';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.88.7:5102/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android' ? 'http://10.0.2.2:5102/api' : 'http://localhost:5102/api');
 
 // ==========================================
 // PULL: Traer datos del servidor (C# API)
