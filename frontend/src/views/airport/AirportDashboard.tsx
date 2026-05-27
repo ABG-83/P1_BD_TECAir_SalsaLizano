@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Row, Col, Card, Spinner } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { flightService } from '../../services/flightService';
-import { userService } from '../../services/userService';
-import { reservationService } from '../../services/reservationService';
+import { useFlights } from '../../hooks/useFlights';
+import { useUsers } from '../../hooks/useUsers';
+import { useReservation } from '../../hooks/useReservation';
 
 interface Stats {
   vuelos: number;
@@ -30,23 +30,29 @@ const StatCard = ({ icon, label, value, color }: { icon: string; label: string; 
 
 const AirportDashboard = () => {
   const { user } = useAuth();
+  const { getAllFlights, loading: flightsLoading } = useFlights();
+  const { getAllUsers, loading: usersLoading } = useUsers();
+  const { getAllReservations, loading: resLoading } = useReservation();
+
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  const loading = flightsLoading || usersLoading || resLoading;
 
   useEffect(() => {
-    Promise.all([
-      flightService.getAll().catch(() => []),
-      userService.getAll().catch(() => []),
-      reservationService.getAll().catch(() => []),
-    ]).then(([vuelos, usuarios, reservaciones]) => {
+    void (async () => {
+      const [vuelos, usuarios, reservaciones] = await Promise.all([
+        getAllFlights(),
+        getAllUsers(),
+        getAllReservations(),
+      ]);
       setStats({
         vuelos: vuelos.length,
         usuarios: usuarios.length,
         reservaciones: reservaciones.length,
-        vuelosAbiertos: vuelos.filter((v: { estado: string }) => v.estado === 'abierto').length,
+        vuelosAbiertos: vuelos.filter(v => v.estado === 'Boarding').length,
       });
-    }).finally(() => setLoading(false));
-  }, []);
+    })();
+  }, [getAllFlights, getAllUsers, getAllReservations]);
 
   return (
     <div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Container, Table, Badge, Spinner, Alert, Button } from 'react-bootstrap';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { reservationService } from '../services/reservationService';
+import { useReservation } from '../hooks/useReservation';
 import type { Reservation } from '../types';
 
 const PAYMENT_BADGE: Record<string, string> = {
@@ -14,33 +14,29 @@ const PAYMENT_BADGE: Record<string, string> = {
 const MyReservationsView = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { loading, error, getReservationsByUser, getAllReservations, cancelReservation } = useReservation();
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isAdmin = user?.rol === 'administrador';
 
-  const load = () => {
+  useEffect(() => {
     if (!user) return;
-    setLoading(true);
-    const fetch = isAdmin ? reservationService.getAll() : reservationService.getByUser(user.id);
-    fetch
-      .then(setReservations)
-      .catch(() => setError('No se pudieron cargar las reservaciones.'))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(load, [user]);
+    void (async () => {
+      const data = isAdmin
+        ? await getAllReservations()
+        : await getReservationsByUser(user.id);
+      setReservations(data);
+    })();
+  }, [user, isAdmin, getAllReservations, getReservationsByUser, refreshKey]);
 
   const handleCancel = async (cod: string) => {
     if (!confirm('¿Seguro que deseas cancelar esta reservación?')) return;
     setCancelling(cod);
     try {
-      await reservationService.cancel(cod);
-      load();
-    } catch {
-      setError('No se pudo cancelar la reservación.');
+      await cancelReservation(cod);
+      setRefreshKey(k => k + 1);
     } finally {
       setCancelling(null);
     }

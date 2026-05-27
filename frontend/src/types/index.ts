@@ -1,5 +1,5 @@
 export type UserRole = 'cliente' | 'funcionario' | 'administrador';
-export type FlightStatus = 'programado' | 'abierto' | 'cerrado' | 'cancelado';
+export type FlightStatus = 'Scheduled' | 'Boarding' | 'Delayed' | 'InAir' | 'Landed' | 'Cancelled';
 export type PaymentStatus = 'pendiente' | 'pagado' | 'cancelado';
 
 export interface User {

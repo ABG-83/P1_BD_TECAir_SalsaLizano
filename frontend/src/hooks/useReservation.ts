@@ -1,30 +1,49 @@
 import { useCallback, useState } from 'react';
-import api from '../services/api'; 
-import type { Reservation, ReservationCreate } from '../types';
+import api from '../services/api';
+import type { Reservation, ReservationCreate, PaymentStatus } from '../types';
+
+interface ReservationResponse {
+  reservationCode: string;
+  date: string;
+  paymentState: string;
+  userId: number;
+  flightNumber?: string;
+  userName?: string;
+}
+
+const mapPaymentState = (state: string): PaymentStatus => {
+  if (state === 'Paid') return 'pagado';
+  if (state === 'Failed' || state === 'Refunded') return 'cancelado';
+  return 'pendiente';
+};
+
+const mapReservation = (r: ReservationResponse): Reservation => ({
+  cod_Reservacion: r.reservationCode,
+  fecha: r.date,
+  estado_Pago: mapPaymentState(r.paymentState),
+  id_Usuario: r.userId,
+  num_Vuelo: 0,
+  flightNumber: r.flightNumber,
+  userName: r.userName ?? undefined,
+});
 
 export const useReservation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── 1. ACCIÓN: CREAR RESERVACIÓN (POST) ──
   const createReservation = useCallback(async (payload: ReservationCreate) => {
     setLoading(true);
     setError(null);
-
     try {
-      // Mapeamos el DTO de TypeScript (snake_case) al formato que espera C# (camelCase)
       const backendPayload = {
         userId: payload.id_Usuario,
         flightNumber: payload.flightNumber ?? String(payload.num_Vuelo ?? ''),
       };
-
       const res = await api.post('/reservations', backendPayload);
       return res.data.reservationCode ?? res.data;
-    } catch (err: any) {
-      const message = err.response?.data?.title || 
-                      err.message || 
-                      'No se pudo completar la reservación. Verifica que el backend esté activo.';
-
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { title?: string } }; message?: string };
+      const message = axiosErr.response?.data?.title || axiosErr.message || 'No se pudo completar la reservación.';
       setError(message);
       throw err;
     } finally {
@@ -32,30 +51,59 @@ export const useReservation = () => {
     }
   }, []);
 
-  // ── 2. ACCIÓN: OBTENER POR USUARIO (GET) ──
-  // Útil para la vista de "Mis Viajes / Historial" de TECAir
   const getReservationsByUser = useCallback(async (userId: number): Promise<Reservation[]> => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get<Reservation[]>(`/reservations/user/${userId}`);
-      return res.data;
-    } catch (err: any) {
-      setError(err.response?.data?.title || 'Error al cargar tus reservaciones.');
+      const res = await api.get<ReservationResponse[]>(`/reservations/user/${userId}`);
+      return res.data.map(mapReservation);
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { title?: string } } };
+      setError(axiosErr.response?.data?.title || 'Error al cargar tus reservaciones.');
       return [];
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ── 3. ACCIÓN: CANCELAR RESERVACIÓN (PATCH) ──
-  const cancelReservation = useCallback(async (id: number): Promise<void> => {
+  const getAllReservations = useCallback(async (): Promise<Reservation[]> => {
     setLoading(true);
     setError(null);
     try {
-      await api.patch(`/reservations/${id}/cancel`);
-    } catch (err: any) {
-      const message = err.response?.data?.title || 'No se pudo cancelar la reservación.';
+      const res = await api.get<ReservationResponse[]>('/reservations');
+      return res.data.map(mapReservation);
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { title?: string } } };
+      setError(axiosErr.response?.data?.title || 'Error al cargar las reservaciones.');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const searchReservations = useCallback(async (name: string): Promise<Reservation[]> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.get<ReservationResponse[]>(`/reservations/search?name=${encodeURIComponent(name)}`);
+      return res.data.map(mapReservation);
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { title?: string } } };
+      setError(axiosErr.response?.data?.title || 'Error al buscar reservaciones.');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const cancelReservation = useCallback(async (code: string): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.delete(`/reservations/${code}`);
+    } catch (err) {
+      const axiosErr = err as { response?: { data?: { title?: string } } };
+      const message = axiosErr.response?.data?.title || 'No se pudo cancelar la reservación.';
       setError(message);
       throw err;
     } finally {
@@ -68,6 +116,8 @@ export const useReservation = () => {
     error,
     createReservation,
     getReservationsByUser,
+    getAllReservations,
+    searchReservations,
     cancelReservation,
     reset: () => setError(null),
   };

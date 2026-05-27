@@ -1,6 +1,10 @@
 
 -- TECAir — Empty State (Database Creation)
 -- Structure-only script with no data.
+-- NOTE: This database must be created with UTF-8 encoding. If you see garbled
+-- characters, drop and recreate it first with:
+--   CREATE DATABASE tecair_dev WITH ENCODING 'UTF8' TEMPLATE template0;
+SET client_encoding TO 'UTF8';
 
 -- Drop tables if they exist (ordered by FK dependencies)
 DROP TABLE IF EXISTS payments       CASCADE;

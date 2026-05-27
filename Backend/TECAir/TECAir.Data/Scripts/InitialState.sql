@@ -3,6 +3,7 @@
 --  Description: Test data insertion script.
 --               Run AFTER Empty State.
 -----------------------------------------------------------------
+SET client_encoding TO 'UTF8';
 
 -- TABLE: users
 -- Covers: regular clients, student clients with college ID/affiliation,

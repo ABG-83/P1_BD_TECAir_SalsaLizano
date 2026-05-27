@@ -1,57 +1,59 @@
-import { useState } from 'react';
-import { Row, Col, Form, Button, Alert, Card, Table } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Row, Col, Form, Button, Alert, Card, Table, Spinner } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';
-import { checkInService } from '../../services/checkInService';
-import type { BoardingPass, Baggage, BaggageCreate } from '../../types';
+import { useCheckIn } from '../../hooks/useCheckIn';
+import { useBaggage } from '../../hooks/useBaggage';
 
 const CheckInManagementView = () => {
   const [searchParams] = useSearchParams();
-  const [codReservacion, setCodReservacion] = useState(searchParams.get('cod') ?? '');
-  const [apellidos, setApellidos] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [boardingPass, setBoardingPass] = useState<BoardingPass | null>(null);
-  const [baggages, setBaggages] = useState<Baggage[]>([]);
-  const [addingBag, setAddingBag] = useState(false);
+  const initialCod = searchParams.get('cod') ?? '';
+  const autoMode   = searchParams.get('auto') === 'true';
+
+  const {
+    boardingPass, loading: checkInLoading, error: checkInError,
+    executeCheckIn, resetCheckIn,
+  } = useCheckIn();
+
+  const {
+    baggages, loading: bagLoading, error: bagError,
+    getBaggageByReservation, addBaggage, reset: resetBaggage,
+  } = useBaggage();
+
+  const [codReservacion, setCodReservacion] = useState(initialCod);
   const [bagForm, setBagForm] = useState<{ peso: string; color: string }>({ peso: '', color: '' });
+
+  const showAutoSpinner = autoMode && (checkInLoading || (!boardingPass && !checkInError));
+
+  useEffect(() => {
+    if (!autoMode || !initialCod) return;
+    void (async () => {
+      const pass = await executeCheckIn(initialCod.trim(), '');
+      if (pass) {
+        await getBaggageByReservation(initialCod.trim());
+      }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleCheckIn = async (e: { preventDefault(): void }) => {
     e.preventDefault();
-    setError('');
-    setBoardingPass(null);
-    setBaggages([]);
-    setLoading(true);
-    try {
-      const pass = await checkInService.doCheckIn(codReservacion.trim(), apellidos);
-      setBoardingPass(pass);
-      const bags = await checkInService.getBaggageByReservation(codReservacion.trim()).catch(() => []);
-      setBaggages(bags);
-    } catch {
-      setError('Reservación no encontrada. Verifica el código y apellidos.');
-    } finally {
-      setLoading(false);
+    resetBaggage();
+    const pass = await executeCheckIn(codReservacion.trim(), '');
+    if (pass) {
+      await getBaggageByReservation(codReservacion.trim());
     }
   };
 
   const handleAddBag = async (e: { preventDefault(): void }) => {
     e.preventDefault();
     if (!boardingPass) return;
-    setAddingBag(true);
-    try {
-      const dto: BaggageCreate = {
-        peso: Number(bagForm.peso),
-        color: bagForm.color,
-        cod_Reservacion: boardingPass.cod_Reservacion,
-        id_Usuario: 0,
-      };
-      const bag = await checkInService.addBaggage(dto);
-      setBaggages(prev => [...prev, bag]);
-      setBagForm({ peso: '', color: '' });
-    } catch {
-      setError('No se pudo agregar la maleta.');
-    } finally {
-      setAddingBag(false);
-    }
+    const bag = await addBaggage({
+      peso: Number(bagForm.peso),
+      color: bagForm.color,
+      cod_Reservacion: boardingPass.cod_Reservacion,
+      id_Usuario: 0,
+    });
+    if (bag) setBagForm({ peso: '', color: '' });
   };
 
   const baggageFee = () => {
@@ -61,11 +63,9 @@ const CheckInManagementView = () => {
   };
 
   const reset = () => {
-    setBoardingPass(null);
-    setBaggages([]);
+    resetCheckIn();
+    resetBaggage();
     setCodReservacion('');
-    setApellidos('');
-    setError('');
   };
 
   return (
@@ -73,23 +73,31 @@ const CheckInManagementView = () => {
       <h3 className="fw-bold mb-1">Check-in</h3>
       <p className="text-muted mb-4">Gestión de chequeo de pasajeros en el aeropuerto.</p>
 
-      {!boardingPass ? (
+      {showAutoSpinner ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" className="mb-3" />
+          <p className="text-muted">Realizando check-in...</p>
+        </div>
+      ) : !boardingPass ? (
         <Row className="justify-content-center">
           <Col md={6}>
             <div className="bg-white rounded shadow-sm p-4">
               <h5 className="fw-bold mb-4">Buscar Reservación</h5>
-              {error && <Alert variant="danger">{error}</Alert>}
+              {checkInError && <Alert variant="danger">{checkInError}</Alert>}
               <Form onSubmit={handleCheckIn}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="text-muted small text-uppercase fw-bold">Código de Reservación</Form.Label>
-                  <Form.Control type="text" className="minimal-input" placeholder="Ej: RES-001" value={codReservacion} onChange={e => setCodReservacion(e.target.value)} required />
-                </Form.Group>
                 <Form.Group className="mb-4">
-                  <Form.Label className="text-muted small text-uppercase fw-bold">Apellidos del Pasajero</Form.Label>
-                  <Form.Control type="text" className="minimal-input" placeholder="Apellidos" value={apellidos} onChange={e => setApellidos(e.target.value)} required />
+                  <Form.Label className="text-muted small text-uppercase fw-bold">Código de Reservación</Form.Label>
+                  <Form.Control
+                    type="text"
+                    className="minimal-input"
+                    placeholder="Ej: RES-001"
+                    value={codReservacion}
+                    onChange={e => setCodReservacion(e.target.value)}
+                    required
+                  />
                 </Form.Group>
-                <Button variant="dark" type="submit" className="w-100" disabled={loading}>
-                  {loading ? 'Procesando...' : 'Realizar Check-in'}
+                <Button variant="dark" type="submit" className="w-100" disabled={checkInLoading}>
+                  {checkInLoading ? 'Procesando...' : 'Realizar Check-in'}
                 </Button>
               </Form>
             </div>
@@ -127,7 +135,10 @@ const CheckInManagementView = () => {
             <Card className="border-0 shadow-sm">
               <Card.Body className="p-4">
                 <h5 className="fw-bold mb-3">Maletas</h5>
-                {baggages.length > 0 && (
+                {bagError && <Alert variant="danger" className="py-2 small">{bagError}</Alert>}
+                {bagLoading && baggages.length === 0 ? (
+                  <div className="text-center py-3"><Spinner animation="border" size="sm" /></div>
+                ) : baggages.length > 0 && (
                   <Table size="sm" className="mb-3">
                     <thead><tr><th>#</th><th>Color</th><th>Peso (kg)</th></tr></thead>
                     <tbody>
@@ -152,15 +163,32 @@ const CheckInManagementView = () => {
                   <Row className="g-2 align-items-end">
                     <Col>
                       <Form.Label className="text-muted small text-uppercase fw-bold">Color</Form.Label>
-                      <Form.Control size="sm" className="minimal-input" placeholder="Ej: Negro" value={bagForm.color} onChange={e => setBagForm(p => ({ ...p, color: e.target.value }))} required />
+                      <Form.Control
+                        size="sm"
+                        className="minimal-input"
+                        placeholder="Ej: Negro"
+                        value={bagForm.color}
+                        onChange={e => setBagForm(p => ({ ...p, color: e.target.value }))}
+                        required
+                      />
                     </Col>
                     <Col>
                       <Form.Label className="text-muted small text-uppercase fw-bold">Peso (kg)</Form.Label>
-                      <Form.Control size="sm" type="number" step="0.1" min="0.1" className="minimal-input" placeholder="23.0" value={bagForm.peso} onChange={e => setBagForm(p => ({ ...p, peso: e.target.value }))} required />
+                      <Form.Control
+                        size="sm"
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        className="minimal-input"
+                        placeholder="23.0"
+                        value={bagForm.peso}
+                        onChange={e => setBagForm(p => ({ ...p, peso: e.target.value }))}
+                        required
+                      />
                     </Col>
                     <Col xs="auto">
-                      <Button variant="dark" size="sm" type="submit" disabled={addingBag}>
-                        {addingBag ? '...' : 'Agregar'}
+                      <Button variant="dark" size="sm" type="submit" disabled={bagLoading}>
+                        {bagLoading ? '...' : 'Agregar'}
                       </Button>
                     </Col>
                   </Row>

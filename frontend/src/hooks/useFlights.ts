@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react';
-import api from '../services/api'; // Tu archivo de configuración de Axios
-import type { Flight, FlightCreate } from '../types';
+import api from '../services/api';
+import type { Flight, FlightCreate, FlightStatus } from '../types';
 
-// ── 1. TIPOS DE DATOS DEL BACKEND (C#) ──
 type BackendSearchFlight = {
   flightNumber?: string;
   departureTime: string;
@@ -31,7 +30,8 @@ export interface FlightSearchParams {
   fecha?: string;
 }
 
-// ── 2. FUNCIONES DE UTILERÍA Y MAPEO ──
+type AxiosErr = { response?: { data?: { title?: string; message?: string } } };
+
 const parseFlightNumber = (flightNumber?: string | number): number => {
   if (typeof flightNumber === 'number') {
     return Number.isFinite(flightNumber) ? flightNumber : 0;
@@ -41,21 +41,27 @@ const parseFlightNumber = (flightNumber?: string | number): number => {
   return digits ? Number(digits) : 0;
 };
 
+const VALID_STATUSES: Flight['estado'][] = ['Scheduled', 'Boarding', 'Delayed', 'InAir', 'Landed', 'Cancelled'];
+
 const mapFlightStatus = (status?: string | number): Flight['estado'] => {
   if (typeof status === 'number') {
     switch (status) {
-      case 1: return 'abierto';
-      case 3:
-      case 4: return 'cerrado';
-      case 5: return 'cancelado';
-      default: return 'programado';
+      case 1: return 'Boarding';
+      case 2: return 'Delayed';
+      case 3: return 'InAir';
+      case 4: return 'Landed';
+      case 5: return 'Cancelled';
+      default: return 'Scheduled';
     }
   }
-  const normalized = status?.toLowerCase() ?? '';
-  if (normalized.includes('board')) return 'abierto';
-  if (normalized.includes('cancel')) return 'cancelado';
-  if (normalized.includes('land') || normalized.includes('air')) return 'cerrado';
-  return 'programado';
+  if (VALID_STATUSES.includes(status as Flight['estado'])) return status as Flight['estado'];
+  const n = (status ?? '').toLowerCase();
+  if (n.includes('board'))  return 'Boarding';
+  if (n.includes('delay'))  return 'Delayed';
+  if (n.includes('inair') || n.includes('in_air')) return 'InAir';
+  if (n.includes('land'))   return 'Landed';
+  if (n.includes('cancel')) return 'Cancelled';
+  return 'Scheduled';
 };
 
 const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
@@ -71,7 +77,6 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
       flightNumber: flight.flightNumber,
     };
   }
-
   return {
     num_Vuelo: parseFlightNumber(flight.flightNumber),
     hora_Salida: flight.departureTime,
@@ -84,37 +89,26 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
   };
 };
 
-// ── 3. HOOK PERSONALIZADO CON EXTRACCIÓN DE DATOS DIRECTA ──
 export const useFlights = () => {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Acción para buscar vuelos según la ruta
   const searchFlights = useCallback(async (params: FlightSearchParams) => {
     setLoading(true);
     setError(null);
-
     try {
       const query = new URLSearchParams();
       if (params.origen) query.append('originId', String(params.origen));
       if (params.destino) query.append('destinationId', String(params.destino));
       if (params.fecha) query.append('date', params.fecha);
-
-      // Realizamos el request HTTP directo utilizando tu instancia de Axios
       const res = await api.get<BackendSearchFlight[]>(`/flights/search?${query.toString()}`);
-      
-      // Mapeamos las respuestas del API de .NET al formato de React
       const results = res.data.map(mapFlight);
-
       setFlights(results);
       return results;
-    } catch (err: any) {
-      // Capturamos el mensaje que envía tu ExceptionMiddleware de C#
-      const message = err.response?.data?.title || 
-                      err.message || 
-                      'No se pudieron cargar los vuelos. Verifica que el backend esté activo.';
-
+    } catch (err) {
+      const e = err as AxiosErr & { message?: string };
+      const message = e.response?.data?.title || e.message || 'No se pudieron cargar los vuelos.';
       setError(message);
       setFlights([]);
       throw err;
@@ -123,7 +117,6 @@ export const useFlights = () => {
     }
   }, []);
 
-  // Opcional: Métodos CRUD adicionales integrados si los ocupás para las vistas de administración
   const getAllFlights = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -132,11 +125,82 @@ export const useFlights = () => {
       const results = res.data.map(mapFlight);
       setFlights(results);
       return results;
-    } catch (err: any) {
-      setError(err.response?.data?.title || 'Error fetching flights directory.');
+    } catch (err) {
+      const e = err as AxiosErr;
+      setError(e.response?.data?.title || 'Error al cargar los vuelos.');
       return [];
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const createFlight = useCallback(async (dto: FlightCreate): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.post('/flights', {
+        flightNumber: dto.flightNumber ?? '',
+        departureTime: dto.hora_Salida,
+        arrivalTime: dto.hora_Llegada,
+        airplanePlateNumber: dto.matricula,
+        originAirportId: dto.id_Aeropuerto_Origen,
+        destinationAirportId: dto.id_Aeropuerto_Destino,
+        stopAirportIds: [],
+      });
+    } catch (err) {
+      const e = err as AxiosErr;
+      setError(e.response?.data?.title || 'No se pudo crear el vuelo.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateFlight = useCallback(async (flightNumber: string, dto: Partial<FlightCreate>): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.put(`/flights/${flightNumber}`, {
+        flightNumber: dto.flightNumber ?? flightNumber,
+        departureTime: dto.hora_Salida,
+        arrivalTime: dto.hora_Llegada,
+        airplanePlateNumber: dto.matricula,
+        originAirportId: dto.id_Aeropuerto_Origen,
+        destinationAirportId: dto.id_Aeropuerto_Destino,
+        stopAirportIds: [],
+      });
+    } catch (err) {
+      const e = err as AxiosErr;
+      setError(e.response?.data?.title || 'No se pudo actualizar el vuelo.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateFlightStatus = useCallback(async (flightNumber: string, estado: FlightStatus): Promise<void> => {
+    setError(null);
+    try {
+      await api.patch(`/flights/${flightNumber}/status`, { status: estado });
+      setFlights(prev => prev.map(f =>
+        (f.flightNumber ?? String(f.num_Vuelo)) === flightNumber ? { ...f, estado } : f
+      ));
+    } catch (err) {
+      const e = err as AxiosErr;
+      setError(e.response?.data?.title || 'No se pudo cambiar el estado del vuelo.');
+      throw err;
+    }
+  }, []);
+
+  const deleteFlight = useCallback(async (flightNumber: string): Promise<void> => {
+    setError(null);
+    try {
+      await api.delete(`/flights/${flightNumber}`);
+      setFlights(prev => prev.filter(f => (f.flightNumber ?? String(f.num_Vuelo)) !== flightNumber));
+    } catch (err) {
+      const e = err as AxiosErr;
+      setError(e.response?.data?.title || 'No se pudo eliminar el vuelo.');
+      throw err;
     }
   }, []);
 
@@ -145,7 +209,11 @@ export const useFlights = () => {
     loading,
     error,
     searchFlights,
-    getAllFlights, // Agregado por si tu vista de admin lo ocupa
+    getAllFlights,
+    createFlight,
+    updateFlight,
+    updateFlightStatus,
+    deleteFlight,
     reset: () => {
       setFlights([]);
       setError(null);

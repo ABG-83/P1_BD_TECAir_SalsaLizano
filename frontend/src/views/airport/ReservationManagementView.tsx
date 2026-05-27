@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Table, Badge, Button, Form, InputGroup, Spinner, Alert, Modal, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { reservationService } from '../../services/reservationService';
+import { useReservation } from '../../hooks/useReservation';
 import { checkInService } from '../../services/checkInService';
 import type { Reservation, Baggage } from '../../types';
 
@@ -13,39 +13,32 @@ const PAYMENT_BADGE: Record<string, string> = {
 
 const ReservationManagementView = () => {
   const navigate = useNavigate();
+  const { loading, error, getAllReservations, searchReservations, reset } = useReservation();
   const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
-  const [searching, setSearching] = useState(false);
+  const [activeSearch, setActiveSearch] = useState('');
 
   const [baggageModal, setBaggageModal] = useState<{ cod: string; userName?: string } | null>(null);
   const [baggages, setBaggages] = useState<Baggage[]>([]);
   const [baggageLoading, setBaggageLoading] = useState(false);
 
-  const load = () => {
-    setLoading(true);
-    reservationService.getAll()
-      .then(setReservations)
-      .catch(() => setError('No se pudieron cargar las reservaciones.'))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    void (async () => {
+      const data = activeSearch
+        ? await searchReservations(activeSearch)
+        : await getAllReservations();
+      setReservations(data);
+    })();
+  }, [activeSearch, getAllReservations, searchReservations]);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setActiveSearch(search.trim());
   };
 
-  useEffect(load, []);
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!search.trim()) { load(); return; }
-    setSearching(true);
-    setError('');
-    try {
-      const results = await reservationService.search(search.trim());
-      setReservations(results);
-    } catch {
-      setError('Error al buscar reservaciones.');
-    } finally {
-      setSearching(false);
-    }
+  const handleClear = () => {
+    setSearch('');
+    setActiveSearch('');
   };
 
   const openBaggage = async (cod: string, userName?: string) => {
@@ -77,7 +70,7 @@ const ReservationManagementView = () => {
         </div>
       </div>
 
-      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert variant="danger" dismissible onClose={reset}>{error}</Alert>}
 
       <Form onSubmit={handleSearch} className="mb-3">
         <InputGroup style={{ maxWidth: '400px' }}>
@@ -86,11 +79,11 @@ const ReservationManagementView = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
-          <Button variant="dark" type="submit" disabled={searching}>
-            {searching ? <Spinner size="sm" animation="border" /> : <i className="bi bi-search" />}
+          <Button variant="dark" type="submit" disabled={loading}>
+            {loading ? <Spinner size="sm" animation="border" /> : <i className="bi bi-search" />}
           </Button>
           {search && (
-            <Button variant="outline-secondary" onClick={() => { setSearch(''); load(); }}>
+            <Button variant="outline-secondary" onClick={handleClear}>
               <i className="bi bi-x" />
             </Button>
           )}
@@ -128,7 +121,7 @@ const ReservationManagementView = () => {
                     <Button
                       variant="outline-dark"
                       size="sm"
-                      onClick={() => navigate(`/aeropuerto/checkin?cod=${r.cod_Reservacion}`)}
+                      onClick={() => navigate(`/aeropuerto/checkin?cod=${r.cod_Reservacion}&auto=true`)}
                       title="Realizar Check-in"
                     >
                       <i className="bi bi-check2-square me-1" />Check-in

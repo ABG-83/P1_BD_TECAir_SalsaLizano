@@ -52,13 +52,39 @@ export const useCheckIn = () => {
       setBoardingPass(mappedPass);
       return mappedPass;
 
-    } catch (err: any) {
-      if (err.response?.status === 404) {
+    } catch (err) {
+      const axiosErr = err as { response?: { status?: number; data?: { message?: string; title?: string } } };
+      const backendMsg = axiosErr.response?.data?.title ?? axiosErr.response?.data?.message ?? '';
+
+      // Reservation already has a check-in: extract the existing ID and fetch the boarding pass
+      if (axiosErr.response?.status === 400) {
+        const idMatch = backendMsg.match(/ID:\s*(\d+)/i);
+        if (idMatch) {
+          try {
+            const existingId = Number(idMatch[1]);
+            const passRes = await api.get<BackendBoardingPassDto>(`/checkin/${existingId}/boarding-pass`);
+            const p = passRes.data;
+            const existing: BoardingPass = {
+              id_Pase: existingId,
+              num_Vuelo: p.flightNumber,
+              cod_Reservacion: p.reservationCode,
+              asiento: p.seat,
+              puerta_Abordaje: p.boardingGate,
+              hora_Impresion: p.printTime,
+            };
+            setBoardingPass(existing);
+            return existing;
+          } catch {
+            // fall through to generic error
+          }
+        }
+      }
+
+      if (axiosErr.response?.status === 404) {
         setError(`La reservación '${reservationCode}' no fue encontrada o no está en estado 'Paid'.`);
         return null;
       }
-      const backendMessage = err.response?.data?.message || err.response?.data?.title;
-      setError(backendMessage || 'Ocurrió un error inesperado al procesar el check-in.');
+      setError(backendMsg || 'Ocurrió un error inesperado al procesar el check-in.');
       return null;
     } finally {
       setLoading(false);
