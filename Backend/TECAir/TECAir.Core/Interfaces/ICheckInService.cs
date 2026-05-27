@@ -33,5 +33,8 @@ namespace TECAir.Core.Interfaces
         // Returns all check-ins recorded for a specific flight.
         // Useful for the staff member to see who has already checked in.
         Task<IEnumerable<CheckInResponseDto>> GetByFlightNumberAsync(string flightNumber);
+
+        // Finds an existing check-in by reservation code. Returns null if none exists.
+        Task<CheckInResponseDto?> GetByReservationCodeAsync(string reservationCode);
     }
 }

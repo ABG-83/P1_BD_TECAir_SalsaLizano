@@ -77,6 +77,19 @@ namespace TECAir.API.Controllers
             return Ok(boardingPass);
         }
 
+        // GET /api/checkin/reservation/{code}
+        // Returns the existing check-in for a reservation code, or 404 if not yet checked in.
+        [HttpGet("reservation/{code}")]
+        [ProducesResponseType(typeof(CheckInResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetByReservation(string code)
+        {
+            var checkIn = await _checkInService.GetByReservationCodeAsync(code);
+            if (checkIn is null)
+                return NotFound(new { message = $"No existe check-in para la reservación '{code}'." });
+            return Ok(checkIn);
+        }
+
         // GET /api/checkin/flight/{flightNumber}
         // Returns all check-ins recorded for a flight.
         // Allows the staff member to see in real time which passengers have boarded.

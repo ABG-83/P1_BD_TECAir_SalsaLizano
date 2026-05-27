@@ -32,7 +32,8 @@ namespace TECAir.Data.Repositories
             Role = Enum.Parse<UserRole>(r.GetString(r.GetOrdinal("role")), ignoreCase: true),
             Miles = r.GetFloat(r.GetOrdinal("miles")),
             CollegeIdNumber = r.IsDBNull(r.GetOrdinal("college_id_number")) ? null : r.GetString(r.GetOrdinal("college_id_number")),
-            College = r.IsDBNull(r.GetOrdinal("college")) ? null : r.GetString(r.GetOrdinal("college"))
+            College = r.IsDBNull(r.GetOrdinal("college")) ? null : r.GetString(r.GetOrdinal("college")),
+            PasswordHash = r.IsDBNull(r.GetOrdinal("password_hash")) ? string.Empty : r.GetString(r.GetOrdinal("password_hash"))
         };
 
         /// <summary>
@@ -69,7 +70,7 @@ namespace TECAir.Data.Repositories
         {
             const string sql = """
                 SELECT user_id, full_name, email, phone_number,
-                       role, miles, college_id_number, college
+                       role, miles, college_id_number, college, password_hash
                 FROM users
                 ORDER BY user_id;
                 """;
@@ -91,7 +92,7 @@ namespace TECAir.Data.Repositories
         {
             const string sql = """
                 SELECT user_id, full_name, email, phone_number,
-                       role, miles, college_id_number, college
+                       role, miles, college_id_number, college, password_hash
                 FROM users
                 WHERE user_id = @userId;
                 """;
@@ -110,7 +111,7 @@ namespace TECAir.Data.Repositories
         {
             const string sql = """
                 SELECT user_id, full_name, email, phone_number,
-                       role, miles, college_id_number, college
+                       role, miles, college_id_number, college, password_hash
                 FROM users
                 WHERE email = @email;
                 """;
@@ -129,9 +130,9 @@ namespace TECAir.Data.Repositories
         {
             const string sql = """
                 INSERT INTO users (full_name, email, phone_number, role,
-                                miles, college_id_number, college)
+                                miles, college_id_number, college, password_hash)
                 VALUES (@fullName, @email, @phone, @role,
-                        @miles, @collegeId, @college)
+                        @miles, @collegeId, @college, @passwordHash)
                 RETURNING user_id;
                 """;
 
@@ -146,6 +147,7 @@ namespace TECAir.Data.Repositories
             AddParam(cmd, "miles", user.Miles);
             AddParam(cmd, "collegeId", user.CollegeIdNumber ?? (object)DBNull.Value);
             AddParam(cmd, "college", user.College ?? (object)DBNull.Value);
+            AddParam(cmd, "passwordHash", user.PasswordHash);
 
             var result = cmd.ExecuteScalar();
             return Convert.ToInt32(result);

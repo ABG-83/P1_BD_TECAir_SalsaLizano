@@ -37,6 +37,14 @@ namespace TECAir.Core.DTOs.Flights
         [Range(1, int.MaxValue)]
         public int DestinationAirportId { get; set; }
 
+        // Flight price in USD.
+        [Required]
+        [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
+        public decimal Price { get; set; }
+
+        // Optional status override used only on updates (ignored on create).
+        public string? Status { get; set; }
+
         // Ordered stopover airport IDs in visit order.
         // Example: SJO → PTY → BOG → LIM → StopAirportIds = [PTY_id, BOG_id]
         // Empty list for a direct flight without stopovers.

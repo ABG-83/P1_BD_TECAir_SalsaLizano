@@ -18,7 +18,7 @@ const STATUS_OPTIONS: FlightStatus[] = ['Scheduled', 'Boarding', 'Delayed', 'InA
 
 const EMPTY_FORM: FlightCreate = {
   flightNumber: '', hora_Salida: '', hora_Llegada: '', estado: 'Scheduled',
-  matricula: '', id_Aeropuerto_Origen: 0, id_Aeropuerto_Destino: 0,
+  matricula: '', id_Aeropuerto_Origen: 0, id_Aeropuerto_Destino: 0, precio: 0,
 };
 
 const FlightManagementView = () => {
@@ -57,6 +57,7 @@ const FlightManagementView = () => {
       matricula: f.matricula,
       id_Aeropuerto_Origen: f.id_Aeropuerto_Origen,
       id_Aeropuerto_Destino: f.id_Aeropuerto_Destino,
+      precio: f.precio ?? 0,
     });
     setShowModal(true);
   };
@@ -98,7 +99,7 @@ const FlightManagementView = () => {
 
   const set = (field: keyof FlightCreate) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm(prev => ({ ...prev, [field]: field.startsWith('id_') ? Number(e.target.value) : e.target.value }));
+      setForm(prev => ({ ...prev, [field]: (field.startsWith('id_') || field === 'precio') ? Number(e.target.value) : e.target.value }));
 
   return (
     <>
@@ -127,6 +128,7 @@ const FlightManagementView = () => {
                 <th>Salida</th>
                 <th>Llegada</th>
                 <th>Avión</th>
+                <th>Precio</th>
                 <th>Estado</th>
                 <th></th>
               </tr>
@@ -140,6 +142,7 @@ const FlightManagementView = () => {
                   <td className="small">{new Date(f.hora_Salida).toLocaleString('es-CR')}</td>
                   <td className="small">{new Date(f.hora_Llegada).toLocaleString('es-CR')}</td>
                   <td>{f.matricula}</td>
+                  <td className="fw-medium">${(f.precio ?? 0).toFixed(2)}</td>
                   <td>
                     <Form.Select
                       size="sm"
@@ -230,6 +233,21 @@ const FlightManagementView = () => {
                   className="minimal-input"
                   value={form.hora_Llegada}
                   onChange={set('hora_Llegada')}
+                  required
+                />
+              </Form.Group>
+            </Row>
+            <Row className="mb-3">
+              <Form.Group as={Col} md={6}>
+                <Form.Label className="text-muted small text-uppercase fw-bold">Precio (USD)</Form.Label>
+                <Form.Control
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="minimal-input"
+                  placeholder="0.00"
+                  value={form.precio ?? 0}
+                  onChange={set('precio')}
                   required
                 />
               </Form.Group>

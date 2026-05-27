@@ -53,6 +53,24 @@ const mock = {
 
 const real = {
   doCheckIn: async (reservationCode: string, _apellidos: string): Promise<BoardingPass> => {
+    // If check-in already exists, return the existing boarding pass
+    try {
+      const existing = await api.get(`/checkin/reservation/${reservationCode}`);
+      const checkInId = existing.data?.checkInId ?? existing.data?.id;
+      if (checkInId) {
+        const passRes = await api.get(`/checkin/${checkInId}/boarding-pass`);
+        const r = passRes.data;
+        return {
+          id_Pase: checkInId,
+          asiento: r.seat,
+          puerta_Abordaje: r.boardingGate,
+          hora_Impresion: r.printTime,
+          cod_Reservacion: r.reservationCode,
+          num_Vuelo: r.flightNumber,
+        };
+      }
+    } catch { /* 404 = no existing check-in, proceed to create */ }
+
     const randomRow = Math.floor(Math.random() * 20) + 1;
     const letters = ['A', 'B', 'C', 'D', 'F'];
     const seat = `${randomRow}${letters[Math.floor(Math.random() * letters.length)]}`;

@@ -47,6 +47,7 @@ export interface Flight {
   aeropuertoOrigen?: Airport;
   aeropuertoDestino?: Airport;
   flightNumber?: string;
+  precio?: number;
 }
 
 export interface FlightCreate {
@@ -57,6 +58,7 @@ export interface FlightCreate {
   matricula: string;
   id_Aeropuerto_Origen: number;
   id_Aeropuerto_Destino: number;
+  precio?: number;
 }
 
 export interface Reservation {

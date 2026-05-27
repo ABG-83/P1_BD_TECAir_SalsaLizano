@@ -15,6 +15,7 @@ type BackendSearchFlight = {
   airplanePlateNumber?: string;
   originAirportId: number;
   destinationAirportId: number;
+  price?: number;
 };
 
 type BackendFlightDto = {
@@ -27,6 +28,7 @@ type BackendFlightDto = {
   destination: { airportId: number; name: string; location: string };
   passengerCapacity?: number;
   stops?: unknown[];
+  price?: number;
 };
 
 const parseFlightNumber = (flightNumber?: string | number): number => {
@@ -75,6 +77,7 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
       id_Aeropuerto_Origen: flight.origin.airportId,
       id_Aeropuerto_Destino: flight.destination.airportId,
       flightNumber: flight.flightNumber,
+      precio: flight.price ?? 0,
     };
   }
 
@@ -87,6 +90,7 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
     id_Aeropuerto_Origen: flight.originAirportId,
     id_Aeropuerto_Destino: flight.destinationAirportId,
     flightNumber: flight.flightNumber,
+    precio: flight.price ?? 0,
   };
 };
 
@@ -164,6 +168,7 @@ const real = {
       flightNumber: dto.flightNumber ?? '',
       departureTime: dto.hora_Salida,
       arrivalTime: dto.hora_Llegada,
+      price: dto.precio ?? 0,
       airplanePlateNumber: dto.matricula,
       originAirportId: dto.id_Aeropuerto_Origen,
       destinationAirportId: dto.id_Aeropuerto_Destino,

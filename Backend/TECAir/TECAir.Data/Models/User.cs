@@ -62,5 +62,10 @@ namespace TECAir.Data.Models
         /// Gets or sets the optional institutional or university affiliation.
         /// </summary>
         public string? College { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the BCrypt hash of the user's password.
+        /// </summary>
+        public string PasswordHash { get; set; } = string.Empty;
     }
 }

@@ -84,6 +84,32 @@ namespace TECAir.API.Controllers
             return NoContent();
         }
 
+        // PUT /api/flights/{number}
+        // Updates departure/arrival times, price, airplane and airports of an existing flight.
+        [HttpPut("{number}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update(string number, [FromBody] CreateFlightDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var updated = await _flightService.UpdateFlightAsync(number, dto);
+            return updated ? NoContent() : NotFound(new { message = $"No se encontró el vuelo '{number}'." });
+        }
+
+        // DELETE /api/flights/{number}
+        // Removes a flight permanently. Returns 404 when it does not exist.
+        [HttpDelete("{number}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete(string number)
+        {
+            var deleted = await _flightService.DeleteFlightAsync(number);
+            return deleted ? NoContent() : NotFound(new { message = $"No se encontró el vuelo '{number}'." });
+        }
+
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

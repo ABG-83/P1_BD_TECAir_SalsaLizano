@@ -27,6 +27,7 @@ namespace TECAir.Data.Repositories
             DepartureTime = r.GetDateTime(r.GetOrdinal("departure_time")),
             ArrivalTime = r.GetDateTime(r.GetOrdinal("arrival_time")),
             Status = Enum.Parse<FlightStatus>(r.GetString(r.GetOrdinal("status"))),
+            Price = r.GetDecimal(r.GetOrdinal("price")),
             AirplanePlateNumber = r.GetString(r.GetOrdinal("airplane_plate_number")),
             OriginAirportId = r.GetInt32(r.GetOrdinal("origin_airport_id")),
             DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id")),
@@ -59,9 +60,9 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Flight>> GetAllAsync()
         {
             const string sql = """
-                    SELECT f.flight_number, f.departure_time, f.arrival_time, f.status,
+                    SELECT f.flight_number, f.departure_time, f.arrival_time, f.status, f.price,
                     f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
-                    a1.name AS origin_airport_name, 
+                    a1.name AS origin_airport_name,
                     a2.name AS destination_airport_name
                 FROM flights f
                 LEFT JOIN airports a1 ON f.origin_airport_id = a1.airport_id
@@ -85,7 +86,7 @@ namespace TECAir.Data.Repositories
         public async Task<Flight?> GetByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
-                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status,
+                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status, f.price,
                        f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
                        COALESCE(a1.name, '') AS origin_airport_name,
                        COALESCE(a2.name, '') AS destination_airport_name
@@ -132,11 +133,11 @@ namespace TECAir.Data.Repositories
         {
             const string sql = """
                 INSERT INTO flights (
-                    flight_number, departure_time, arrival_time, status,
+                    flight_number, departure_time, arrival_time, status, price,
                     airplane_plate_number, origin_airport_id, destination_airport_id
                 )
                 VALUES (
-                    @flightNumber, @departureTime, @arrivalTime, @status,
+                    @flightNumber, @departureTime, @arrivalTime, @status, @price,
                     @airplanePlateNumber, @originAirportId, @destinationAirportId
                 );
                 """;
@@ -149,6 +150,7 @@ namespace TECAir.Data.Repositories
             AddParam(command, "departureTime", flight.DepartureTime);
             AddParam(command, "arrivalTime", flight.ArrivalTime);
             AddParam(command, "status", flight.Status.ToString());
+            AddParam(command, "price", flight.Price);
             AddParam(command, "airplanePlateNumber", flight.AirplanePlateNumber);
             AddParam(command, "originAirportId", flight.OriginAirportId);
             AddParam(command, "destinationAirportId", flight.DestinationAirportId);
@@ -195,17 +197,61 @@ namespace TECAir.Data.Repositories
         }
 
         /// <inheritdoc />
+        public async Task<bool> UpdateAsync(Flight flight)
+        {
+            const string sql = """
+                UPDATE flights
+                SET departure_time         = @departureTime,
+                    arrival_time           = @arrivalTime,
+                    price                  = @price,
+                    status                 = @status,
+                    airplane_plate_number  = @airplanePlateNumber,
+                    origin_airport_id      = @originAirportId,
+                    destination_airport_id = @destinationAirportId
+                WHERE flight_number = @flightNumber;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+
+            AddParam(command, "flightNumber", flight.FlightNumber);
+            AddParam(command, "departureTime", flight.DepartureTime);
+            AddParam(command, "arrivalTime", flight.ArrivalTime);
+            AddParam(command, "price", flight.Price);
+            AddParam(command, "status", flight.Status.ToString());
+            AddParam(command, "airplanePlateNumber", flight.AirplanePlateNumber);
+            AddParam(command, "originAirportId", flight.OriginAirportId);
+            AddParam(command, "destinationAirportId", flight.DestinationAirportId);
+
+            return command.ExecuteNonQuery() > 0;
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> DeleteAsync(string flightNumber)
+        {
+            const string sql = "DELETE FROM flights WHERE flight_number = @flightNumber;";
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            AddParam(command, "flightNumber", flightNumber);
+
+            return command.ExecuteNonQuery() > 0;
+        }
+
+        /// <inheritdoc />
         public async Task<IEnumerable<Flight>> GetFlightsByRouteAsync(int originId, int destinationId)
         {
             const string query = """
-                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status, 
+                SELECT f.flight_number, f.departure_time, f.arrival_time, f.status, f.price,
                     f.airplane_plate_number, f.origin_airport_id, f.destination_airport_id,
-                    a1.name AS origin_airport_name, 
+                    a1.name AS origin_airport_name,
                     a2.name AS destination_airport_name
                 FROM flights f
                 LEFT JOIN airports a1 ON f.origin_airport_id = a1.airport_id
                 LEFT JOIN airports a2 ON f.destination_airport_id = a2.airport_id
-                WHERE f.origin_airport_id = @originId 
+                WHERE f.origin_airport_id = @originId
                 AND f.destination_airport_id = @destinationId
                 ORDER BY f.departure_time ASC;
                 """;

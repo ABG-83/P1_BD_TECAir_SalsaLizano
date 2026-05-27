@@ -137,6 +137,7 @@ namespace TECAir.Core.Services
             return new BoardingPassDto
             {
                 CheckInId = checkIn.CheckInId,
+                ReservationCode = checkIn.ReservationCode,
                 FlightNumber = checkIn.FlightNumber,
                 Seat = checkIn.Seat,
                 BoardingGate = checkIn.BoardingGate,
@@ -148,6 +149,20 @@ namespace TECAir.Core.Services
                 PassengerName = user?.FullName ?? "Desconocido",
                 PassengerEmail = user?.Email ?? "Sin correo"
             };
+        }
+
+        // Returns the existing check-in for a reservation code, or null if not yet checked in.
+        public async Task<CheckInResponseDto?> GetByReservationCodeAsync(string reservationCode)
+        {
+            var checkIn = await _checkInRepository.GetByReservationCodeAsync(reservationCode);
+            if (checkIn is null) return null;
+
+            var reservation = await _reservationRepository.GetByCodeAsync(checkIn.ReservationCode);
+            var user = reservation is not null
+                       ? await _userRepository.GetByIdAsync(reservation.UserId)
+                       : null;
+
+            return MapToResponseDto(checkIn, user?.FullName ?? "Desconocido");
         }
 
         // Returns all check-ins for a flight so the staff member can review the boarding status.

@@ -39,5 +39,15 @@ namespace TECAir.Core.Interfaces
         /// (programado, abierto, cerrado, cancelado) and maps them to the backend enum.
         /// </summary>
         Task UpdateFlightStatusAsync(string flightNumber, string status);
+
+        /// <summary>
+        /// Deletes a flight by its flight number. Returns false when it does not exist.
+        /// </summary>
+        Task<bool> DeleteFlightAsync(string flightNumber);
+
+        /// <summary>
+        /// Updates the mutable fields of a flight. Returns false when it does not exist.
+        /// </summary>
+        Task<bool> UpdateFlightAsync(string flightNumber, CreateFlightDto dto);
     }
 }

@@ -47,5 +47,8 @@ namespace TECAir.Core.DTOs.BoardingPass
 
         // Check-in ID that generated this boarding pass (useful for traceability)
         public int CheckInId { get; set; }
+
+        // Reservation code this check-in belongs to
+        public string ReservationCode { get; set; } = string.Empty;
     }
 }

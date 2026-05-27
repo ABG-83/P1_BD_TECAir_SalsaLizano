@@ -85,7 +85,8 @@ namespace TECAir.Core.Services
                 FlightNumber         = dto.FlightNumber,
                 DepartureTime        = dto.DepartureTime,
                 ArrivalTime          = dto.ArrivalTime,
-                Status               = FlightStatus.Scheduled,  // Todo vuelo nuevo inicia en Scheduled
+                Status               = FlightStatus.Scheduled,
+                Price                = dto.Price,
                 AirplanePlateNumber  = dto.AirplanePlateNumber,
                 OriginAirportId      = dto.OriginAirportId,
                 DestinationAirportId = dto.DestinationAirportId
@@ -148,8 +149,35 @@ namespace TECAir.Core.Services
             await _flightRepository.UpdateStatusAsync(flightNumber, mapped);
         }
 
+        /// <inheritdoc />
+        public async Task<bool> DeleteFlightAsync(string flightNumber) =>
+            await _flightRepository.DeleteAsync(flightNumber);
+
+        /// <inheritdoc />
+        public async Task<bool> UpdateFlightAsync(string flightNumber, CreateFlightDto dto)
+        {
+            var existing = await _flightRepository.GetByFlightNumberAsync(flightNumber);
+            if (existing is null) return false;
+
+            if (dto.ArrivalTime <= dto.DepartureTime)
+                throw new InvalidOperationException("La hora de llegada debe ser posterior a la hora de salida.");
+
+            existing.DepartureTime        = dto.DepartureTime;
+            existing.ArrivalTime          = dto.ArrivalTime;
+            existing.Price                = dto.Price;
+            existing.AirplanePlateNumber  = dto.AirplanePlateNumber;
+            existing.OriginAirportId      = dto.OriginAirportId;
+            existing.DestinationAirportId = dto.DestinationAirportId;
+
+            if (!string.IsNullOrWhiteSpace(dto.Status) &&
+                Enum.TryParse<FlightStatus>(dto.Status, ignoreCase: true, out var parsedStatus))
+                existing.Status = parsedStatus;
+
+            return await _flightRepository.UpdateAsync(existing);
+        }
+
         // ── Private helper method ────────────────────────────────────────────
- 
+
         // Construye un FlightResponseDto enriquecido a partir del modelo plano Flight.
         // Consulta la BD para resolver los nombres de todos los aeropuertos de la ruta.
         private async Task<FlightResponseDto> BuildResponseDtoAsync(Flight flight)
@@ -179,6 +207,7 @@ namespace TECAir.Core.Services
                 DepartureTime       = flight.DepartureTime,
                 ArrivalTime         = flight.ArrivalTime,
                 Status              = flight.Status.ToString(),
+                Price               = flight.Price,
                 AirplanePlateNumber = flight.AirplanePlateNumber,
                 PassengerCapacity   = airplane?.PassengerCapacity ?? 0,
                 Origin = new AirportSummaryDto

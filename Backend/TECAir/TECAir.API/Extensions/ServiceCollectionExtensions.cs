@@ -51,6 +51,7 @@ namespace TECAir.API.Extensions
             services.AddScoped<IFlightClosingService, FlightClosingService>();         // Issue #30
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IReservationService, ReservationService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }

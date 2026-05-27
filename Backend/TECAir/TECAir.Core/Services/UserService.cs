@@ -62,6 +62,9 @@ namespace TECAir.Core.Services
         /// <inheritdoc/>
         public async Task<int> CreateUserAsync(UserRequestDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.Password))
+                throw new InvalidOperationException("La contraseña es requerida para registrar un usuario.");
+
             var user = new User
             {
                 FullName = dto.FullName,
@@ -69,7 +72,8 @@ namespace TECAir.Core.Services
                 PhoneNumber = dto.PhoneNumber,
                 Role = UserRole.CLIENT,
                 CollegeIdNumber = dto.CollegeIdNumber,
-                College = dto.College
+                College = dto.College,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
             };
 
             return await _userRepository.CreateAsync(user);

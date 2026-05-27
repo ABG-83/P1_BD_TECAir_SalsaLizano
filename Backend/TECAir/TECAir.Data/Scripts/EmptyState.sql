@@ -29,7 +29,8 @@ CREATE TABLE users (
     miles              REAL            NOT NULL DEFAULT 0
                                        CHECK (miles >= 0),
     college_id_number  VARCHAR(50),
-    college            VARCHAR(150)
+    college            VARCHAR(150),
+    password_hash      VARCHAR(255)    NOT NULL DEFAULT ''
 );
 
 COMMENT ON TABLE  users                     IS 'System users: clients and airport staff.';
@@ -61,6 +62,8 @@ CREATE TABLE flights (
     arrival_time           TIMESTAMP       NOT NULL,
     status                 VARCHAR(20)     NOT NULL DEFAULT 'Scheduled'
                                            CHECK (status IN ('Scheduled', 'Boarding', 'Delayed', 'InAir', 'Landed', 'Cancelled')),
+    price                  DECIMAL(10,2)   NOT NULL DEFAULT 0
+                                           CHECK (price >= 0),
     airplane_plate_number  VARCHAR(20)     NOT NULL,
     origin_airport_id      INT             NOT NULL,
     destination_airport_id INT             NOT NULL,

@@ -17,6 +17,9 @@ namespace TECAir.Core.DTOs.Flights
         // Assigned aircraft capacity (useful for the frontend).
         public int PassengerCapacity { get; set; }
 
+        // Flight price in USD.
+        public decimal Price { get; set; }
+
         // Origin airport with name and location.
         public AirportSummaryDto Origin { get; set; } = new();
 

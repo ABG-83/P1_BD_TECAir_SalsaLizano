@@ -5,26 +5,30 @@
 -----------------------------------------------------------------
 SET client_encoding TO 'UTF8';
 
+-- pgcrypto is required to generate BCrypt password hashes
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- TABLE: users
+-- All seed users have the password: password123
 -- Covers: regular clients, student clients with college ID/affiliation,
 --         staff users, and an administrator.
-INSERT INTO users (full_name, email, phone_number, role, miles, college_id_number, college) VALUES
+INSERT INTO users (full_name, email, phone_number, role, miles, college_id_number, college, password_hash) VALUES
 -- Students (have college ID and affiliation)
-('Carlos Mendoza Vargas',    'carlos.mendoza@estudiantec.cr', '88001122', 'CLIENT', 1500, 'C-2021-0001', 'Instituto Tecnológico de Costa Rica'),
-('Ana Sofía Jiménez Rojas', 'ana.jimenez@estudiantec.cr',    '88002233', 'CLIENT', 800,  'C-2022-0045', 'Instituto Tecnológico de Costa Rica'),
-('Diego Hernández Mora',     'diego.hernandez@ucr.ac.cr',     '88003344', 'CLIENT', 200,  'B95432',      'Universidad de Costa Rica'),
-('Valeria Torres Campos',    'valeria.torres@una.ac.cr',      '88004455', 'CLIENT', 3200, 'UNA-20190034','Universidad Nacional de Costa Rica'),
+('Carlos Mendoza Vargas',    'carlos.mendoza@estudiantec.cr', '88001122', 'CLIENT', 1500, 'C-2021-0001', 'Instituto Tecnológico de Costa Rica', crypt('password123', gen_salt('bf'))),
+('Ana Sofía Jiménez Rojas', 'ana.jimenez@estudiantec.cr',    '88002233', 'CLIENT', 800,  'C-2022-0045', 'Instituto Tecnológico de Costa Rica', crypt('password123', gen_salt('bf'))),
+('Diego Hernández Mora',     'diego.hernandez@ucr.ac.cr',     '88003344', 'CLIENT', 200,  'B95432',      'Universidad de Costa Rica',          crypt('password123', gen_salt('bf'))),
+('Valeria Torres Campos',    'valeria.torres@una.ac.cr',      '88004455', 'CLIENT', 3200, 'UNA-20190034','Universidad Nacional de Costa Rica',  crypt('password123', gen_salt('bf'))),
 -- Regular clients (no college info)
-('Luis Fernando Quesada',    'luis.quesada@gmail.com',        '88005566', 'CLIENT', 500,  NULL, NULL),
-('María Elena Castillo',     'maria.castillo@gmail.com',      '88006677', 'CLIENT', 950,  NULL, NULL),
-('Roberto Alvarado Pérez',   'roberto.alvarado@hotmail.com',  '88007788', 'CLIENT', 100,  NULL, NULL),
-('Daniela Núñez Solís',      'daniela.nunez@outlook.com',     '88008899', 'CLIENT', 2700, NULL, NULL),
-('Andrés Calvo Blanco',      'andres.calvo@gmail.com',        '88009900', 'CLIENT', 0,    NULL, NULL),
+('Luis Fernando Quesada',    'luis.quesada@gmail.com',        '88005566', 'CLIENT', 500,  NULL, NULL, crypt('password123', gen_salt('bf'))),
+('María Elena Castillo',     'maria.castillo@gmail.com',      '88006677', 'CLIENT', 950,  NULL, NULL, crypt('password123', gen_salt('bf'))),
+('Roberto Alvarado Pérez',   'roberto.alvarado@hotmail.com',  '88007788', 'CLIENT', 100,  NULL, NULL, crypt('password123', gen_salt('bf'))),
+('Daniela Núñez Solís',      'daniela.nunez@outlook.com',     '88008899', 'CLIENT', 2700, NULL, NULL, crypt('password123', gen_salt('bf'))),
+('Andrés Calvo Blanco',      'andres.calvo@gmail.com',        '88009900', 'CLIENT', 0,    NULL, NULL, crypt('password123', gen_salt('bf'))),
 -- Airport staff
-('Patricia Solano Vega',     'patricia.solano@tecair.cr',     '22001100', 'CLIENT', 0,    NULL, NULL),
-('Marco Rodríguez Fallas',   'marco.rodriguez@tecair.cr',     '22002200', 'CLIENT', 0,    NULL, NULL),
+('Patricia Solano Vega',     'patricia.solano@tecair.cr',     '22001100', 'CLIENT', 0,    NULL, NULL, crypt('password123', gen_salt('bf'))),
+('Marco Rodríguez Fallas',   'marco.rodriguez@tecair.cr',     '22002200', 'CLIENT', 0,    NULL, NULL, crypt('password123', gen_salt('bf'))),
 -- Administrator
-('Admin TECAir',             'admin@tecair.cr',               '22003300', 'ADMIN',  0,    NULL, NULL);
+('Admin TECAir',             'admin@tecair.cr',               '22003300', 'ADMIN',  0,    NULL, NULL, crypt('password123', gen_salt('bf')));
 
 -- TABLE: airplanes
 INSERT INTO airplanes (plate_number, passenger_capacity, seat_count) VALUES
@@ -55,23 +59,23 @@ INSERT INTO airports (name, location) VALUES
 --   6 = Benito Juárez   (MEX)
 --   7 = Comairas        (EZE)
 --   8 = Miami           (MIA)
-INSERT INTO flights (flight_number, departure_time, arrival_time, status, airplane_plate_number, origin_airport_id, destination_airport_id) VALUES
+INSERT INTO flights (flight_number, departure_time, arrival_time, status, price, airplane_plate_number, origin_airport_id, destination_airport_id) VALUES
 -- TA-001: SJO -> BOG | Scheduled
-('TA-001', '2026-06-01 06:00:00', '2026-06-01 09:30:00', 'Scheduled', 'TEC-001', 1, 3),
+('TA-001', '2026-06-01 06:00:00', '2026-06-01 09:30:00', 'Scheduled', 350.00, 'TEC-001', 1, 3),
 -- TA-002: SJO -> LIM | Scheduled
-('TA-002', '2026-06-01 08:00:00', '2026-06-01 13:00:00', 'Scheduled', 'TEC-002', 1, 4),
+('TA-002', '2026-06-01 08:00:00', '2026-06-01 13:00:00', 'Scheduled', 450.00, 'TEC-002', 1, 4),
 -- TA-003: SJO -> PTY | Boarding (open for check-in demo)
-('TA-003', '2026-05-20 10:00:00', '2026-05-20 11:30:00', 'Boarding', 'TEC-003', 1, 5),
+('TA-003', '2026-05-20 10:00:00', '2026-05-20 11:30:00', 'Boarding',  180.00, 'TEC-003', 1, 5),
 -- TA-004: SJO -> MEX | Boarding
-('TA-004', '2026-05-20 14:00:00', '2026-05-20 17:45:00', 'Boarding', 'TEC-004', 1, 6),
+('TA-004', '2026-05-20 14:00:00', '2026-05-20 17:45:00', 'Boarding',  320.00, 'TEC-004', 1, 6),
 -- TA-005: SJO -> MIA | Landed (closed flight demo)
-('TA-005', '2026-05-19 07:00:00', '2026-05-19 10:00:00', 'Landed',   'TEC-001', 1, 8),
+('TA-005', '2026-05-19 07:00:00', '2026-05-19 10:00:00', 'Landed',    280.00, 'TEC-001', 1, 8),
 -- TA-006: BOG -> LIM | Scheduled (with stop in PTY)
-('TA-006', '2026-06-02 09:00:00', '2026-06-02 15:00:00', 'Scheduled', 'TEC-002', 3, 4),
+('TA-006', '2026-06-02 09:00:00', '2026-06-02 15:00:00', 'Scheduled', 220.00, 'TEC-002', 3, 4),
 -- TA-007: LIR -> MIA | Scheduled
-('TA-007', '2026-06-03 11:00:00', '2026-06-03 15:30:00', 'Scheduled', 'TEC-003', 2, 8),
+('TA-007', '2026-06-03 11:00:00', '2026-06-03 15:30:00', 'Scheduled', 310.00, 'TEC-003', 2, 8),
 -- TA-008: SJO -> EZE | Scheduled (with stops)
-('TA-008', '2026-06-05 05:00:00', '2026-06-05 20:00:00', 'Scheduled', 'TEC-004', 1, 7);
+('TA-008', '2026-06-05 05:00:00', '2026-06-05 20:00:00', 'Scheduled', 520.00, 'TEC-004', 1, 7);
 
 -- TABLE: flight_routes
 -- Covers routes with 1 and 2 intermediate stops

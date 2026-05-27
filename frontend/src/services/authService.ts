@@ -8,9 +8,11 @@ const delay = <T>(data: T): Promise<T> =>
   new Promise(resolve => setTimeout(() => resolve(data), 400));
 
 const mock = {
-  login: async ({ correo }: LoginRequest): Promise<AuthUser> => {
+  login: async ({ correo, contrasena }: LoginRequest): Promise<AuthUser> => {
     const user = mockDb.users.find(u => u.correo === correo);
-    if (!user) throw new Error('Usuario no encontrado');
+    if (!user) throw new Error('Credenciales inválidas.');
+    if ((user as any).contrasena && (user as any).contrasena !== contrasena)
+      throw new Error('Credenciales inválidas.');
     return delay({
       id: user.id_Usuario,
       nombre: user.nombre,
@@ -28,9 +30,11 @@ const mapRole = (role: string): AuthUser['rol'] => {
 
 const real = {
   login: async (credentials: LoginRequest): Promise<AuthUser> => {
-    const response = await api.get(`/users/by-email?email=${encodeURIComponent(credentials.correo)}`);
+    const response = await api.post('/auth/login', {
+      email: credentials.correo,
+      password: credentials.contrasena,
+    });
     const user = response.data;
-    if (!user) throw new Error('Usuario no encontrado');
     return {
       id: user.userId,
       nombre: user.fullName,

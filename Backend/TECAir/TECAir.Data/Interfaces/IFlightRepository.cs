@@ -52,5 +52,15 @@ namespace TECAir.Data.Interfaces
         /// Gets the seat capacity configured for the airplane assigned to a flight.
         /// </summary>
         Task<int> GetCapacityByFlightNumberAsync(string flightNumber);
+
+        /// <summary>
+        /// Deletes a flight and its associated routes. Returns false when not found.
+        /// </summary>
+        Task<bool> DeleteAsync(string flightNumber);
+
+        /// <summary>
+        /// Updates the mutable fields of a flight. Returns false when not found.
+        /// </summary>
+        Task<bool> UpdateAsync(Flight flight);
     }
 }

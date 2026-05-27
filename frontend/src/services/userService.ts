@@ -29,6 +29,7 @@ const toBackendDto = (dto: UserRequest) => ({
   phoneNumber: dto.telefono,
   collegeIdNumber: dto.carnet ?? '',
   college: dto.universidad ?? '',
+  password: dto.contrasena ?? '',
 });
 
 const mock = {

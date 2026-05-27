@@ -73,5 +73,7 @@ namespace TECAir.Data.Models
         public string OriginAirportName { get; set; } = string.Empty;
 
         public string DestinationAirportName { get; set; } = string.Empty;
+
+        public decimal Price { get; set; } = 0;
     }
 }

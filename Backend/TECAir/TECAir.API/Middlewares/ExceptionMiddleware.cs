@@ -60,6 +60,12 @@ namespace TECAir.API.Middlewares
                     ex.Message
                 ),
 
+                // Authentication failures
+                UnauthorizedAccessException => (
+                    StatusCodes.Status401Unauthorized,
+                    ex.Message
+                ),
+
                 // Fallback
                 _ => (
                     StatusCodes.Status500InternalServerError,

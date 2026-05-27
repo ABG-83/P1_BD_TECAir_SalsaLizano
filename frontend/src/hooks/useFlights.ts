@@ -10,6 +10,9 @@ type BackendSearchFlight = {
   airplanePlateNumber?: string;
   originAirportId: number;
   destinationAirportId: number;
+  originAirportName?: string;
+  destinationAirportName?: string;
+  price?: number;
 };
 
 type BackendFlightDto = {
@@ -22,6 +25,7 @@ type BackendFlightDto = {
   destination: { airportId: number; name: string; location: string };
   passengerCapacity?: number;
   stops?: unknown[];
+  price?: number;
 };
 
 export interface FlightSearchParams {
@@ -75,6 +79,9 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
       id_Aeropuerto_Origen: flight.origin.airportId,
       id_Aeropuerto_Destino: flight.destination.airportId,
       flightNumber: flight.flightNumber,
+      precio: flight.price ?? 0,
+      aeropuertoOrigen: { id_Aeropuerto: flight.origin.airportId, nombre: flight.origin.name, ubicacion: flight.origin.location },
+      aeropuertoDestino: { id_Aeropuerto: flight.destination.airportId, nombre: flight.destination.name, ubicacion: flight.destination.location },
     };
   }
   return {
@@ -86,6 +93,9 @@ const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
     id_Aeropuerto_Origen: flight.originAirportId,
     id_Aeropuerto_Destino: flight.destinationAirportId,
     flightNumber: flight.flightNumber,
+    precio: flight.price ?? 0,
+    aeropuertoOrigen: flight.originAirportName ? { id_Aeropuerto: flight.originAirportId, nombre: flight.originAirportName, ubicacion: '' } : undefined,
+    aeropuertoDestino: flight.destinationAirportName ? { id_Aeropuerto: flight.destinationAirportId, nombre: flight.destinationAirportName, ubicacion: '' } : undefined,
   };
 };
 
@@ -142,6 +152,7 @@ export const useFlights = () => {
         flightNumber: dto.flightNumber ?? '',
         departureTime: dto.hora_Salida,
         arrivalTime: dto.hora_Llegada,
+        price: dto.precio ?? 0,
         airplanePlateNumber: dto.matricula,
         originAirportId: dto.id_Aeropuerto_Origen,
         destinationAirportId: dto.id_Aeropuerto_Destino,
@@ -164,6 +175,8 @@ export const useFlights = () => {
         flightNumber: dto.flightNumber ?? flightNumber,
         departureTime: dto.hora_Salida,
         arrivalTime: dto.hora_Llegada,
+        price: dto.precio ?? 0,
+        status: dto.estado,
         airplanePlateNumber: dto.matricula,
         originAirportId: dto.id_Aeropuerto_Origen,
         destinationAirportId: dto.id_Aeropuerto_Destino,

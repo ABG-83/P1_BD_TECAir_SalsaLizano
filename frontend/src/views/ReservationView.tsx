@@ -5,7 +5,6 @@ import FlightCard from '../components/FlightCard';
 import { useReservation } from '../hooks/useReservation';
 import { useAuth } from '../context/AuthContext';
 import { useFlights } from '../hooks/useFlights';
-import { promotionService } from '../services/promotionService';
 import type { Flight } from '../types';
 
 const ReservationView = () => {
@@ -63,16 +62,9 @@ const ReservationView = () => {
         num_Vuelo: selectedFlight.num_Vuelo,
       });
 
-      // Look up the active promotion price for this route
-      let price: number | undefined;
-      try {
-        const promos = await promotionService.getActive();
-        const match = promos.find(p =>
-          p.id_Aeropuerto_Origen === selectedFlight.id_Aeropuerto_Origen &&
-          p.id_Aeropuerto_Destino === selectedFlight.id_Aeropuerto_Destino
-        );
-        if (match) price = match.precio;
-      } catch { /* no promotion found, price stays undefined */ }
+      const price = selectedFlight.precio && selectedFlight.precio > 0
+        ? selectedFlight.precio
+        : undefined;
 
       setSelectedFlight(null);
       navigate(`/pago?cod=${cod}${price !== undefined ? `&monto=${price}` : ''}`);

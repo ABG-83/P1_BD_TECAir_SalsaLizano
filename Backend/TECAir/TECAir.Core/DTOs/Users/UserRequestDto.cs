@@ -27,5 +27,8 @@ namespace TECAir.Core.DTOs.Users
 
         public string CollegeIdNumber { get; set; } = string.Empty;
         public string College { get; set; } = string.Empty;
+
+        [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres.")]
+        public string? Password { get; set; }
     }
 }
