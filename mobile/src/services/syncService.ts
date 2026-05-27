@@ -1,23 +1,30 @@
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
-import { 
-  getPendingReservations, 
-  updateReservationSyncStatus, 
-  syncVuelosLocales, 
+import {
+  getPendingReservations,
+  updateReservationSyncStatus,
+  syncVuelosLocales,
   syncPromocionesLocales,
-  getFlightNumberById 
+  syncAeropuertosLocales,
+  getFlightNumberById,
 } from '../database/db';
 
-// Hardcodeamos temporalmente para evitar el caché de variables de entorno de Metro/Expo
-const API_URL = 'http://192.168.88.7:5102/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://192.168.88.7:5102/api';
 
 // ==========================================
 // PULL: Traer datos del servidor (C# API)
 // ==========================================
 export const pullDataFromServer = async () => {
   try {
-    console.log("Iniciando PULL de Vuelos y Promociones...");
-    
+    console.log("Iniciando PULL de Aeropuertos, Vuelos y Promociones...");
+
+    // Traer Aeropuertos
+    const airportsReq = await axios.get(`${API_URL}/airports`);
+    if (airportsReq.data && Array.isArray(airportsReq.data)) {
+      syncAeropuertosLocales(airportsReq.data);
+      console.log(`PULL exitoso: ${airportsReq.data.length} aeropuertos actualizados en SQLite.`);
+    }
+
     // Traer Vuelos
     const vuelosReq = await axios.get(`${API_URL}/flights`);
     if (vuelosReq.data && Array.isArray(vuelosReq.data)) {
@@ -25,11 +32,11 @@ export const pullDataFromServer = async () => {
       console.log(`PULL exitoso: ${vuelosReq.data.length} vuelos actualizados en SQLite.`);
     }
 
-    // Traer Promociones
-    const promoReq = await axios.get(`${API_URL}/promotions`);
+    // Traer solo promociones activas (endpoint para clientes)
+    const promoReq = await axios.get(`${API_URL}/promotions/active`);
     if (promoReq.data && Array.isArray(promoReq.data)) {
       syncPromocionesLocales(promoReq.data);
-      console.log(`PULL exitoso: ${promoReq.data.length} promociones actualizadas en SQLite.`);
+      console.log(`PULL exitoso: ${promoReq.data.length} promociones activas actualizadas en SQLite.`);
     }
 
   } catch (error) {

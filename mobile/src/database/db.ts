@@ -34,6 +34,12 @@ export const initDatabase = () => {
     db.execSync('PRAGMA foreign_keys = ON;');
 
     db.execSync(`
+      CREATE TABLE IF NOT EXISTS Aeropuertos (
+        id INTEGER PRIMARY KEY,
+        nombre TEXT NOT NULL,
+        ubicacion TEXT
+      );
+
       CREATE TABLE IF NOT EXISTS Usuarios (
         id INTEGER PRIMARY KEY,
         nombre TEXT NOT NULL,
@@ -46,15 +52,21 @@ export const initDatabase = () => {
       CREATE TABLE IF NOT EXISTS Vuelos (
         id INTEGER PRIMARY KEY,
         codigo_vuelo TEXT,
+        origen_id INTEGER,
+        destino_id INTEGER,
         origen TEXT NOT NULL,
         destino TEXT NOT NULL,
         precio REAL NOT NULL,
         fecha_salida TEXT,
-        matricula_avion TEXT
+        fecha_llegada TEXT,
+        matricula_avion TEXT,
+        estado TEXT DEFAULT 'Scheduled'
       );
 
       CREATE TABLE IF NOT EXISTS Promociones (
         id INTEGER PRIMARY KEY,
+        origen_id INTEGER,
+        destino_id INTEGER,
         origen TEXT NOT NULL,
         destino TEXT NOT NULL,
         precio REAL NOT NULL,
@@ -77,18 +89,18 @@ export const initDatabase = () => {
     `);
     
     // Migraciones dinámicas para bases de datos existentes en el dispositivo
-    try {
-      db.execSync('ALTER TABLE Vuelos ADD COLUMN codigo_vuelo TEXT;');
-      console.log("Migración: Columna 'codigo_vuelo' agregada exitosamente a la tabla Vuelos.");
-    } catch (e) {
-      // Silenciar: la columna ya existe
-    }
-
-    try {
-      db.execSync('ALTER TABLE Reservaciones ADD COLUMN cantidad_asientos INTEGER DEFAULT 1;');
-      console.log("Migración: Columna 'cantidad_asientos' agregada exitosamente a la tabla Reservaciones.");
-    } catch (e) {
-      // Silenciar: la columna ya existe
+    const migrations = [
+      'ALTER TABLE Vuelos ADD COLUMN codigo_vuelo TEXT;',
+      'ALTER TABLE Vuelos ADD COLUMN origen_id INTEGER;',
+      'ALTER TABLE Vuelos ADD COLUMN destino_id INTEGER;',
+      'ALTER TABLE Vuelos ADD COLUMN fecha_llegada TEXT;',
+      'ALTER TABLE Vuelos ADD COLUMN estado TEXT DEFAULT \'Scheduled\';',
+      'ALTER TABLE Promociones ADD COLUMN origen_id INTEGER;',
+      'ALTER TABLE Promociones ADD COLUMN destino_id INTEGER;',
+      'ALTER TABLE Reservaciones ADD COLUMN cantidad_asientos INTEGER DEFAULT 1;',
+    ];
+    for (const m of migrations) {
+      try { db.execSync(m); } catch { /* columna ya existe */ }
     }
     
     console.log("Base de datos local y tablas (Usuarios, Vuelos, Promociones, Reservaciones) inicializadas.");
@@ -149,63 +161,114 @@ const parseFlightNumber = (flightNumber?: string | number): number => {
   return digits ? Number(digits) : 0;
 };
 
-const getAirportCode = (id: number): string => {
-  const codes: Record<number, string> = {
-    1: 'SJO',
-    2: 'LIR',
-    3: 'BOG',
-    4: 'LIM',
-    5: 'PTY',
-    6: 'MEX',
-    7: 'EZE',
-    8: 'MIA'
-  };
-  return codes[id] || `AP-${id}`;
+export const syncAeropuertosLocales = (aeropuertos: any[]) => {
+  if (Platform.OS === 'web') return;
+  if (!db) return;
+  try {
+    db.execSync('DELETE FROM Aeropuertos');
+    for (const a of aeropuertos) {
+      const id  = a.airportId ?? a.AirportId ?? 0;
+      const nom = a.name      ?? a.Name      ?? '';
+      const ub  = a.location  ?? a.Location  ?? '';
+      if (!id) continue;
+      db.runSync(
+        'INSERT INTO Aeropuertos (id, nombre, ubicacion) VALUES (?, ?, ?)',
+        [id, nom, ub]
+      );
+    }
+    console.log(`Sincronización local de aeropuertos: ${aeropuertos.length} registros.`);
+  } catch (error) {
+    console.error("Error al sincronizar aeropuertos locales:", error);
+  }
+};
+
+export const getAeropuertosLocales = (): { airportId: number; name: string; location: string }[] => {
+  if (Platform.OS === 'web') return [];
+  if (!db) return [];
+  try {
+    const rows = db.getAllSync('SELECT id as airportId, nombre as name, ubicacion as location FROM Aeropuertos ORDER BY nombre');
+    return rows as { airportId: number; name: string; location: string }[];
+  } catch {
+    return [];
+  }
 };
 
 export const syncVuelosLocales = (vuelos: any[]) => {
-  if (Platform.OS === 'web') return; 
+  if (Platform.OS === 'web') return;
   if (!db) return;
-  
   try {
     db.execSync('DELETE FROM Vuelos');
     for (const v of vuelos) {
       const id = parseFlightNumber(v.flightNumber);
-      const originCode = getAirportCode(v.origin?.airportId ?? v.originAirportId ?? 0);
-      const destCode = getAirportCode(v.destination?.airportId ?? v.destinationAirportId ?? 0);
-      
+      const originId = v.origin?.airportId ?? v.originAirportId ?? 0;
+      const destId = v.destination?.airportId ?? v.destinationAirportId ?? 0;
+      const originName = v.origin?.name ?? '';
+      const destName = v.destination?.name ?? '';
       db.runSync(
-        'INSERT INTO Vuelos (id, codigo_vuelo, origen, destino, precio, fecha_salida, matricula_avion) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [id, v.flightNumber || `TA-${id}`, originCode, destCode, 250, v.departureTime, v.airplanePlateNumber]
+        'INSERT INTO Vuelos (id, codigo_vuelo, origen_id, destino_id, origen, destino, precio, fecha_salida, fecha_llegada, matricula_avion, estado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, v.flightNumber || `TA-${id}`, originId, destId, originName, destName, v.price ?? 0, v.departureTime ?? '', v.arrivalTime ?? '', v.airplanePlateNumber ?? '', v.status ?? 'Scheduled']
       );
     }
-    console.log("Sincronización local de vuelos completada exitosamente.");
+    console.log(`Sincronización local de vuelos: ${vuelos.length} registros.`);
   } catch (error) {
     console.error("Error al sincronizar vuelos locales:", error);
+  }
+};
+
+export const getVuelosLocales = (): any[] => {
+  if (Platform.OS === 'web') return [];
+  if (!db) return [];
+  try {
+    return db.getAllSync('SELECT * FROM Vuelos') as any[];
+  } catch {
+    return [];
   }
 };
 
 export const syncPromocionesLocales = (promociones: any[]) => {
   if (Platform.OS === 'web') return;
   if (!db) return;
-  
   try {
     db.execSync('DELETE FROM Promociones');
     for (const p of promociones) {
-      const originCode = getAirportCode(p.origin?.airportId ?? p.originAirportId ?? 0);
-      const destCode = getAirportCode(p.destination?.airportId ?? p.destinationAirportId ?? 0);
-      const period = p.startDate && p.endDate 
-        ? `${p.startDate.split('T')[0]} a ${p.endDate.split('T')[0]}`
+      const originId   = p.origin?.airportId   ?? p.origin?.AirportId   ?? p.Origin?.airportId   ?? p.Origin?.AirportId   ?? p.originAirportId   ?? 0;
+      const destId     = p.destination?.airportId ?? p.destination?.AirportId ?? p.Destination?.airportId ?? p.Destination?.AirportId ?? p.destinationAirportId ?? 0;
+      const originName = p.origin?.name   ?? p.origin?.Name   ?? p.Origin?.name   ?? p.Origin?.Name   ?? '';
+      const destName   = p.destination?.name ?? p.destination?.Name ?? p.Destination?.name ?? p.Destination?.Name ?? '';
+      const startRaw   = String(p.startDate ?? p.StartDate ?? '');
+      const endRaw     = String(p.endDate   ?? p.EndDate   ?? '');
+      const period     = startRaw && endRaw
+        ? `${startRaw.split('T')[0]} a ${endRaw.split('T')[0]}`
         : (p.periodo || 'Promoción Activa');
-        
+      const id         = p.promotionId ?? p.PromotionId ?? p.id ?? 0;
       db.runSync(
-        'INSERT INTO Promociones (id, origen, destino, precio, periodo, imagen) VALUES (?, ?, ?, ?, ?, ?)',
-        [p.promotionId || p.id, originCode, destCode, p.price || p.precio || 0, period, p.image || p.imagen || '']
+        'INSERT INTO Promociones (id, origen_id, destino_id, origen, destino, precio, periodo, imagen) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [id, originId, destId, originName, destName, Number(p.price ?? p.Price ?? p.precio ?? 0), period, p.image ?? p.Image ?? p.imagen ?? '']
       );
     }
-    console.log("Sincronización local de promociones completada exitosamente.");
+    console.log(`Sincronización local de promociones: ${promociones.length} registros.`);
   } catch (error) {
     console.error("Error al sincronizar promociones locales:", error);
+  }
+};
+
+export const getPromocionesLocales = (): import('../services/promotionService').Promotion[] => {
+  if (Platform.OS === 'web') return [];
+  if (!db) return [];
+  try {
+    const rows = db.getAllSync('SELECT * FROM Promociones') as any[];
+    return rows.map(p => ({
+      promotionId: p.id,
+      price: p.precio,
+      startDate: p.periodo?.split(' a ')[0] ?? '',
+      endDate:   p.periodo?.split(' a ')[1] ?? '',
+      image: p.imagen || undefined,
+      isActive: true,
+      origin:      { airportId: p.origen_id ?? 0,  name: p.origen ?? '',  location: '' },
+      destination: { airportId: p.destino_id ?? 0, name: p.destino ?? '', location: '' },
+    }));
+  } catch {
+    return [];
   }
 };
 

@@ -26,13 +26,13 @@ namespace TECAir.Data.Repositories
             FlightNumber = r.GetString(r.GetOrdinal("flight_number")),
             DepartureTime = r.GetDateTime(r.GetOrdinal("departure_time")),
             ArrivalTime = r.GetDateTime(r.GetOrdinal("arrival_time")),
-            Status = Enum.Parse<FlightStatus>(r.GetString(r.GetOrdinal("status"))),
+            Status = Enum.Parse<FlightStatus>(r.GetString(r.GetOrdinal("status")), ignoreCase: true),
             Price = r.GetDecimal(r.GetOrdinal("price")),
             AirplanePlateNumber = r.GetString(r.GetOrdinal("airplane_plate_number")),
             OriginAirportId = r.GetInt32(r.GetOrdinal("origin_airport_id")),
             DestinationAirportId = r.GetInt32(r.GetOrdinal("destination_airport_id")),
-            OriginAirportName = r.GetString(r.GetOrdinal("origin_airport_name")),
-            DestinationAirportName = r.GetString(r.GetOrdinal("destination_airport_name"))
+            OriginAirportName = r.IsDBNull(r.GetOrdinal("origin_airport_name")) ? string.Empty : r.GetString(r.GetOrdinal("origin_airport_name")),
+            DestinationAirportName = r.IsDBNull(r.GetOrdinal("destination_airport_name")) ? string.Empty : r.GetString(r.GetOrdinal("destination_airport_name"))
         };
 
         /// <summary>
