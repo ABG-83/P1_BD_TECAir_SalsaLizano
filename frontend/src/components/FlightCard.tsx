@@ -7,17 +7,19 @@ interface FlightCardProps {
 }
 
 const STATUS_LABELS: Record<string, { label: string; bg: string }> = {
-  programado: { label: 'Programado', bg: 'secondary' },
-  abierto:    { label: 'Abierto',    bg: 'success'   },
-  cerrado:    { label: 'Cerrado',    bg: 'danger'     },
-  cancelado:  { label: 'Cancelado',  bg: 'warning'    },
+  Scheduled: { label: 'Programado', bg: 'secondary' },
+  Boarding:  { label: 'Abordando',  bg: 'success'   },
+  Delayed:   { label: 'Retrasado',  bg: 'warning'   },
+  InAir:     { label: 'En vuelo',   bg: 'info'      },
+  Landed:    { label: 'Aterrizado', bg: 'danger'    },
+  Cancelled: { label: 'Cancelado',  bg: 'dark'      },
 };
 
 const FlightCard = ({ flight, onReserve }: FlightCardProps) => {
   const salida   = new Date(flight.hora_Salida);
   const llegada  = new Date(flight.hora_Llegada);
   const status   = STATUS_LABELS[flight.estado] ?? { label: flight.estado, bg: 'secondary' };
-  const disabled = flight.estado === 'cerrado' || flight.estado === 'cancelado';
+  const disabled = flight.estado === 'Landed' || flight.estado === 'InAir' || flight.estado === 'Cancelled';
 
   const origen  = flight.aeropuertoOrigen?.nombre  ?? `Aeropuerto #${flight.id_Aeropuerto_Origen}`;
   const destino = flight.aeropuertoDestino?.nombre ?? `Aeropuerto #${flight.id_Aeropuerto_Destino}`;

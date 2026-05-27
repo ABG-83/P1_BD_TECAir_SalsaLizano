@@ -44,26 +44,27 @@ const parseFlightNumber = (flightNumber?: string | number): number => {
   return digits ? Number(digits) : 0;
 };
 
+const VALID_STATUSES: Flight['estado'][] = ['Scheduled', 'Boarding', 'Delayed', 'InAir', 'Landed', 'Cancelled'];
+
 const mapFlightStatus = (status?: string | number): Flight['estado'] => {
   if (typeof status === 'number') {
     switch (status) {
-      case 1:
-        return 'abierto';
-      case 3:
-      case 4:
-        return 'cerrado';
-      case 5:
-        return 'cancelado';
-      default:
-        return 'programado';
+      case 1: return 'Boarding';
+      case 2: return 'Delayed';
+      case 3: return 'InAir';
+      case 4: return 'Landed';
+      case 5: return 'Cancelled';
+      default: return 'Scheduled';
     }
   }
-
-  const normalized = status?.toLowerCase() ?? '';
-  if (normalized.includes('board')) return 'abierto';
-  if (normalized.includes('cancel')) return 'cancelado';
-  if (normalized.includes('land') || normalized.includes('air')) return 'cerrado';
-  return 'programado';
+  if (VALID_STATUSES.includes(status as Flight['estado'])) return status as Flight['estado'];
+  const n = (status ?? '').toLowerCase();
+  if (n.includes('board'))  return 'Boarding';
+  if (n.includes('delay'))  return 'Delayed';
+  if (n.includes('inair') || n.includes('in_air')) return 'InAir';
+  if (n.includes('land'))   return 'Landed';
+  if (n.includes('cancel')) return 'Cancelled';
+  return 'Scheduled';
 };
 
 const mapFlight = (flight: BackendSearchFlight | BackendFlightDto): Flight => {
@@ -104,7 +105,7 @@ const mock = {
   },
 
   search: (params: { origen?: number; destino?: number; fecha?: string }) => {
-    let results = [...mockDb.flights].filter(f => f.estado !== 'cancelado');
+    let results = [...mockDb.flights].filter(f => f.estado !== 'Cancelled');
     if (params.origen)  results = results.filter(f => f.id_Aeropuerto_Origen  === params.origen);
     if (params.destino) results = results.filter(f => f.id_Aeropuerto_Destino === params.destino);
     if (params.fecha)   results = results.filter(f => f.hora_Salida.startsWith(params.fecha!));

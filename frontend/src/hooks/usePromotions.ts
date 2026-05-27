@@ -32,6 +32,7 @@ const mapPromotion = (backendPromo: BackendPromotionDto | any): Promotion => {
   const fecha_Inicio = backendPromo.startDate ?? backendPromo.StartDate;
   const fecha_Fin = backendPromo.endDate ?? backendPromo.EndDate;
   const imagen = backendPromo.image ?? backendPromo.Image;
+  const estado_Activa = backendPromo.isActive ?? backendPromo.IsActive ?? false;
 
   // Resolve nested nodes safely handling casing differences
   const originNode = backendPromo.origin ?? backendPromo.Origin;
@@ -41,11 +42,15 @@ const mapPromotion = (backendPromo: BackendPromotionDto | any): Promotion => {
   const id_Aeropuerto_Destino = destinationNode?.airportId ?? destinationNode?.AirportId ?? 0;
 
   const aeropuertoOrigen = {
-    nombre: originNode?.name ?? originNode?.Name ?? `Aeropuerto #${id_Aeropuerto_Origen}`
+    id_Aeropuerto: id_Aeropuerto_Origen,
+    nombre: originNode?.name ?? originNode?.Name ?? `Aeropuerto #${id_Aeropuerto_Origen}`,
+    ubicacion: originNode?.location ?? originNode?.Location ?? '',
   };
 
   const aeropuertoDestino = {
-    nombre: destinationNode?.name ?? destinationNode?.Name ?? `Aeropuerto #${id_Aeropuerto_Destino}`
+    id_Aeropuerto: id_Aeropuerto_Destino,
+    nombre: destinationNode?.name ?? destinationNode?.Name ?? `Aeropuerto #${id_Aeropuerto_Destino}`,
+    ubicacion: destinationNode?.location ?? destinationNode?.Location ?? '',
   };
 
   return {
@@ -54,10 +59,11 @@ const mapPromotion = (backendPromo: BackendPromotionDto | any): Promotion => {
     fecha_Inicio,
     fecha_Fin,
     imagen,
+    estado_Activa,
     id_Aeropuerto_Origen,
     id_Aeropuerto_Destino,
     aeropuertoOrigen,
-    aeropuertoDestino
+    aeropuertoDestino,
   };
 };
 

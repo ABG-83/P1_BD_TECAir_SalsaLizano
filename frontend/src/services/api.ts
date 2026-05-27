@@ -1,9 +1,7 @@
 import axios from 'axios';
 
-// Configuración base de Axios
-// Por ahora apuntará a un endpoint local o puede ser reemplazado por los mocks
 const api = axios.create({
-  baseURL: 'http://localhost:5102/api', // Ajustar al puerto de la Web API C#
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5102/api',
   headers: {
     'Content-Type': 'application/json'
   }

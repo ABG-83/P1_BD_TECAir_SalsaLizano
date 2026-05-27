@@ -27,27 +27,27 @@ export const mockUsers: User[] = [
 export const mockFlights: Flight[] = [
   {
     num_Vuelo: 101, hora_Salida: '2026-07-15T08:00:00', hora_Llegada: '2026-07-15T11:30:00',
-    estado: 'abierto', matricula: 'TEC-001', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 5,
+    estado: 'Boarding', matricula: 'TEC-001', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 5,
     aeropuertoOrigen: mockAirports[0], aeropuertoDestino: mockAirports[4],
   },
   {
     num_Vuelo: 102, hora_Salida: '2026-07-16T14:30:00', hora_Llegada: '2026-07-17T06:00:00',
-    estado: 'abierto', matricula: 'TEC-002', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 3,
+    estado: 'Boarding', matricula: 'TEC-002', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 3,
     aeropuertoOrigen: mockAirports[0], aeropuertoDestino: mockAirports[2],
   },
   {
     num_Vuelo: 103, hora_Salida: '2026-07-18T09:00:00', hora_Llegada: '2026-07-18T12:00:00',
-    estado: 'programado', matricula: 'TEC-003', id_Aeropuerto_Origen: 2, id_Aeropuerto_Destino: 5,
+    estado: 'Scheduled', matricula: 'TEC-003', id_Aeropuerto_Origen: 2, id_Aeropuerto_Destino: 5,
     aeropuertoOrigen: mockAirports[1], aeropuertoDestino: mockAirports[4],
   },
   {
     num_Vuelo: 104, hora_Salida: '2026-07-20T07:00:00', hora_Llegada: '2026-07-20T10:30:00',
-    estado: 'abierto', matricula: 'TEC-004', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 4,
+    estado: 'Boarding', matricula: 'TEC-004', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 4,
     aeropuertoOrigen: mockAirports[0], aeropuertoDestino: mockAirports[3],
   },
   {
     num_Vuelo: 105, hora_Salida: '2026-06-10T06:00:00', hora_Llegada: '2026-06-10T09:00:00',
-    estado: 'cerrado', matricula: 'TEC-001', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 6,
+    estado: 'Landed', matricula: 'TEC-001', id_Aeropuerto_Origen: 1, id_Aeropuerto_Destino: 6,
     aeropuertoOrigen: mockAirports[0], aeropuertoDestino: mockAirports[5],
   },
 ];

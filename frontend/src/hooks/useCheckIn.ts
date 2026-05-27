@@ -16,7 +16,7 @@ export const useCheckIn = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const executeCheckIn = useCallback(async (reservationCode: string, lastName: string) => {
+  const executeCheckIn = useCallback(async (reservationCode: string, _lastName: string) => {
     setLoading(true);
     setError(null);
     setBoardingPass(null);
