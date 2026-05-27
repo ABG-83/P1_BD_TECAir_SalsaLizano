@@ -27,7 +27,8 @@ namespace TECAir.Data.Repositories
             Date = r.GetDateTime(r.GetOrdinal("date")),
             PaymentState = Enum.Parse<PaymentStatus>(r.GetString(r.GetOrdinal("payment_state"))),
             UserId = r.GetInt32(r.GetOrdinal("user_id")),
-            FlightNumber = r.GetString(r.GetOrdinal("flight_number"))
+            FlightNumber = r.GetString(r.GetOrdinal("flight_number")),
+            SeatCount = r.GetInt32(r.GetOrdinal("seat_count"))
         };
 
         /// <summary>
@@ -104,8 +105,8 @@ namespace TECAir.Data.Repositories
         public async Task<string> CreateAsync(Reservation reservation)
         {
             const string query = """
-                INSERT INTO reservations (reservation_code, date, payment_state, user_id, flight_number)
-                VALUES (@code, @date, @state, @userId, @flightNum)
+                INSERT INTO reservations (reservation_code, date, payment_state, user_id, flight_number, seat_count)
+                VALUES (@code, @date, @state, @userId, @flightNum, @seatCount)
                 RETURNING reservation_code;
                 """;
 
@@ -118,6 +119,7 @@ namespace TECAir.Data.Repositories
             AddParameter(command, "@state", reservation.PaymentState.ToString());
             AddParameter(command, "@userId", reservation.UserId);
             AddParameter(command, "@flightNum", reservation.FlightNumber);
+            AddParameter(command, "@seatCount", reservation.SeatCount);
 
             var result = await Task.Run(() => command.ExecuteScalar());
             return result?.ToString() ?? string.Empty;
@@ -168,7 +170,7 @@ namespace TECAir.Data.Repositories
         public async Task<Reservation?> GetByCodeAsync(string reservationCode)
         {
             const string query = """
-                SELECT reservation_code, date, payment_state, user_id, flight_number 
+                SELECT reservation_code, date, payment_state, user_id, flight_number, seat_count 
                 FROM reservations 
                 WHERE reservation_code = @code;
                 """;
@@ -187,7 +189,7 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId)
         {
             const string query = """
-                SELECT reservation_code, date, payment_state, user_id, flight_number 
+                SELECT reservation_code, date, payment_state, user_id, flight_number, seat_count 
                 FROM reservations 
                 WHERE user_id = @userId 
                 ORDER BY date DESC;
@@ -213,7 +215,7 @@ namespace TECAir.Data.Repositories
         public async Task<IEnumerable<Reservation>> GetPaidByFlightNumberAsync(string flightNumber)
         {
             const string sql = """
-                SELECT reservation_code, date, payment_state, user_id, flight_number
+                SELECT reservation_code, date, payment_state, user_id, flight_number, seat_count
                 FROM reservations
                 WHERE flight_number = @flightNumber
                   AND payment_state = 'Paid'
@@ -239,7 +241,7 @@ namespace TECAir.Data.Repositories
         public async Task<int> GetActiveCountByFlightNumberAsync(string flightNumber)
         {
             const string sql = @"
-                SELECT COUNT(*) 
+                SELECT COALESCE(SUM(seat_count), 0) 
                 FROM reservations 
                 WHERE flight_number = @FlightNumber 
                   AND payment_state <> @RefundedStatus;";

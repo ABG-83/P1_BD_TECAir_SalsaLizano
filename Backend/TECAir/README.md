@@ -23,7 +23,7 @@ Ve a la carpeta del proyecto principal de la API (`TECAir.API/`) y crea un archi
 
 ### 2. Copiar la plantilla base
 
-Abre el archivo `appsettings.Example.json` que está en la raíz, copia todo su contenido y pégalo dentro de tu nuevo archivo `appsettings.json`.
+Abre el archivo `appsettings.Example.json` que está en la misma carpeta (`TECAir.API/`), copia todo su contenido y pégalo dentro de tu nuevo archivo `appsettings.json`.
 
 ### 3. Configurar tus credenciales reales
 
@@ -31,7 +31,7 @@ Busca la sección `ConnectionStrings` dentro de tu `appsettings.json` y reemplaz
 
 ```json
 "ConnectionStrings": {
-  "DefaultConnection": "Host=localhost;Port=5432;Database=tecair_dev;Username=TU_USUARIO;Password=TU_CONTRASEÑA"
+  "Default": "Host=localhost;Port=5432;Database=tecair_dev;Username=TU_USUARIO;Password=TU_CONTRASEÑA"
 }
 ```
 

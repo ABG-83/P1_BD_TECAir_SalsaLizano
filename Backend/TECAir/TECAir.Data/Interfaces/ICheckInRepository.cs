@@ -29,6 +29,11 @@ namespace TECAir.Data.Interfaces
         Task<CheckIn?> GetByReservationCodeAsync(string reservationCode);
 
         /// <summary>
+        /// Gets the count of check-ins registered for a reservation code.
+        /// </summary>
+        Task<int> GetCountByReservationCodeAsync(string reservationCode);
+
+        /// <summary>
         /// Gets all check-ins registered for a flight.
         /// </summary>
         Task<IEnumerable<CheckIn>> GetByFlightNumberAsync(string flightNumber);

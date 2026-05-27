@@ -4,11 +4,12 @@ import {
   getPendingReservations, 
   updateReservationSyncStatus, 
   syncVuelosLocales, 
-  syncPromocionesLocales 
+  syncPromocionesLocales,
+  getFlightNumberById 
 } from '../database/db';
 
-// He reemplazado la URL dinámicamente según la tarjeta de red Wi-Fi
-const API_URL = 'http://192.168.68.54:5000/api';
+// Hardcodeamos temporalmente para evitar el caché de variables de entorno de Metro/Expo
+const API_URL = 'http://192.168.88.7:5102/api';
 
 // ==========================================
 // PULL: Traer datos del servidor (C# API)
@@ -18,14 +19,14 @@ export const pullDataFromServer = async () => {
     console.log("Iniciando PULL de Vuelos y Promociones...");
     
     // Traer Vuelos
-    const vuelosReq = await axios.get(`${API_URL}/vuelos`);
+    const vuelosReq = await axios.get(`${API_URL}/flights`);
     if (vuelosReq.data && Array.isArray(vuelosReq.data)) {
       syncVuelosLocales(vuelosReq.data);
       console.log(`PULL exitoso: ${vuelosReq.data.length} vuelos actualizados en SQLite.`);
     }
 
     // Traer Promociones
-    const promoReq = await axios.get(`${API_URL}/promociones`);
+    const promoReq = await axios.get(`${API_URL}/promotions`);
     if (promoReq.data && Array.isArray(promoReq.data)) {
       syncPromocionesLocales(promoReq.data);
       console.log(`PULL exitoso: ${promoReq.data.length} promociones actualizadas en SQLite.`);
@@ -52,13 +53,14 @@ export const pushPendingReservations = async () => {
 
     for (const res of pendingReservations) {
       try {
-        // Enviar reservación al API. Pasamos el UUID generado localmente.
+        // Obtener el código de vuelo real (ej. TA-001) para el API
+        const flightNumber = getFlightNumberById(res.vuelo_id) || `TA-${String(res.vuelo_id).padStart(3, '0')}`;
+
+        // Enviar reservación al API. Mapeado al DTO de C# (CreateReservationDto)
         const response = await axios.post(`${API_URL}/reservations`, {
-          id: res.id,
-          vuelo_id: res.vuelo_id,
-          usuario_id: res.usuario_id,
-          asiento: res.asiento,
-          maletas: res.maletas
+          userId: res.usuario_id,
+          flightNumber: flightNumber,
+          seatCount: res.cantidad_asientos || 1
         });
         
         // Si el API responde 200/201 (Éxito)

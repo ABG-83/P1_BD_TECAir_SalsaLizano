@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, FlatList, Platform } from 'react-native';
 import { theme } from '../../src/styles/theme';
 import db from '../../src/database/db'; // Importando SQLite
 import OfflineBanner from '../../components/OfflineBanner';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 // Definición básica de la tabla local Vuelos
 interface Vuelo {
@@ -21,8 +21,8 @@ export default function SearchFlightsScreen() {
   const [destino, setDestino] = useState('');
   const [vuelosLocal, setVuelosLocal] = useState<Vuelo[]>([]);
 
-  // Cargar vuelos EXCLUSIVAMENTE de SQLite una vez renderizada la pantalla
-  useEffect(() => {
+  // Cargar vuelos EXCLUSIVAMENTE de SQLite cuando la pantalla gana el foco
+  const fetchFlights = useCallback(() => {
     if (Platform.OS !== 'web' && db) {
       try {
         const results = db.getAllSync('SELECT * FROM Vuelos') as Vuelo[];
@@ -38,6 +38,8 @@ export default function SearchFlightsScreen() {
       ]);
     }
   }, []);
+
+  useFocusEffect(fetchFlights);
 
   // Lógica de filtrado 100% en el cliente JS/React Native
   const filteredVuelos = vuelosLocal.filter(v => 

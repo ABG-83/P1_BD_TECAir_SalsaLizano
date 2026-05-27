@@ -125,6 +125,24 @@ namespace TECAir.Data.Repositories
         }
 
         /// <inheritdoc />
+        public async Task<int> GetCountByReservationCodeAsync(string reservationCode)
+        {
+            const string sql = """
+                SELECT COUNT(*)
+                FROM check_ins
+                WHERE reservation_code = @reservationCode;
+                """;
+
+            using var connection = await _connectionFactory.CreateConnectionAsync();
+            using var command = connection.CreateCommand();
+            command.CommandText = sql;
+            AddParam(command, "reservationCode", reservationCode);
+
+            var count = Convert.ToInt32(command.ExecuteScalar());
+            return count;
+        }
+
+        /// <inheritdoc />
         public async Task<bool> IsSeatTakenAsync(string flightNumber, string seat)
         {
             const string sql = """

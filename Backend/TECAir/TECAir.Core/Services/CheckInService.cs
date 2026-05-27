@@ -53,12 +53,11 @@ namespace TECAir.Core.Services
                     $"El vuelo '{flight.FlightNumber}' no está en fase de abordaje. " +
                     $"Estado actual: '{flight.Status}'. Solo se puede hacer check-in en vuelos 'Boarding'.");
 
-            // Detect whether the passenger has already checked in for this reservation.
-            var existingCheckIn = await _checkInRepository.GetByReservationCodeAsync(dto.ReservationCode);
-            if (existingCheckIn is not null)
+            // Detect how many passengers have checked in for this reservation.
+            int currentCheckInsCount = await _checkInRepository.GetCountByReservationCodeAsync(dto.ReservationCode);
+            if (currentCheckInsCount >= reservation.SeatCount)
                 throw new InvalidOperationException(
-                    $"La reservación {dto.ReservationCode} ya tiene check-in registrado " +
-                    $"(ID: {existingCheckIn.CheckInId}, Asiento: {existingCheckIn.Seat}).");
+                    $"La reservación {dto.ReservationCode} ya completó el chequeo de todos sus ({reservation.SeatCount}) asientos.");
 
             // Normalize the seat to uppercase to avoid duplicates caused by case differences.
             var seatNormalized = dto.Seat.Trim().ToUpperInvariant();

@@ -145,6 +145,70 @@ const mock = {
     mockDb.flights.splice(idx, 1);
     return delay(undefined as void);
   },
+
+  openFlight: (flightNumber: string): Promise<any> => {
+    const f = mockDb.flights.find(fl => fl.flightNumber === flightNumber);
+    if (f) f.estado = 'abierto';
+    return delay({
+      flightNumber,
+      status: 'Boarding',
+      departureTime: new Date().toISOString(),
+      arrivalTime: new Date().toISOString(),
+      totalPassengers: 2,
+      totalBaggages: 3,
+      passengers: [
+        { reservationCode: 'RES-001', fullName: 'Carlos Mendoza', email: 'carlos.mendoza@estudiantec.cr', baggageCount: 1, baggageSurcharge: 0 },
+        { reservationCode: 'RES-002', fullName: 'Ana Sofía Jiménez', email: 'ana.jimenez@estudiantec.cr', baggageCount: 2, baggageSurcharge: 50 },
+      ]
+    });
+  },
+
+  closeFlight: (flightNumber: string): Promise<any> => {
+    const f = mockDb.flights.find(fl => fl.flightNumber === flightNumber);
+    if (f) f.estado = 'cerrado';
+    return delay({
+      flightNumber,
+      status: 'InAir',
+      departureTime: new Date().toISOString(),
+      arrivalTime: new Date().toISOString(),
+      totalPassengers: 2,
+      totalBaggages: 3,
+      passengers: [
+        { checkInId: 1, seat: '12A', boardingGate: 'B3', fullName: 'Carlos Mendoza', email: 'carlos.mendoza@estudiantec.cr', baggageCount: 1, baggageSurcharge: 0 },
+        { checkInId: 2, seat: '12B', boardingGate: 'B3', fullName: 'Ana Sofía Jiménez', email: 'ana.jimenez@estudiantec.cr', baggageCount: 2, baggageSurcharge: 50 },
+      ]
+    });
+  },
+
+  getManifest: (flightNumber: string): Promise<any> => {
+    return delay({
+      flightNumber,
+      status: 'Scheduled',
+      departureTime: new Date().toISOString(),
+      arrivalTime: new Date().toISOString(),
+      totalPassengers: 2,
+      totalBaggages: 3,
+      passengers: [
+        { reservationCode: 'RES-001', fullName: 'Carlos Mendoza', email: 'carlos.mendoza@estudiantec.cr', baggageCount: 1, baggageSurcharge: 0 },
+        { reservationCode: 'RES-002', fullName: 'Ana Sofía Jiménez', email: 'ana.jimenez@estudiantec.cr', baggageCount: 2, baggageSurcharge: 50 },
+      ]
+    });
+  },
+
+  getFinalList: (flightNumber: string): Promise<any> => {
+    return delay({
+      flightNumber,
+      status: 'Boarding',
+      departureTime: new Date().toISOString(),
+      arrivalTime: new Date().toISOString(),
+      totalPassengers: 2,
+      totalBaggages: 3,
+      passengers: [
+        { checkInId: 1, seat: '12A', boardingGate: 'B3', fullName: 'Carlos Mendoza', email: 'carlos.mendoza@estudiantec.cr', baggageCount: 1, baggageSurcharge: 0 },
+        { checkInId: 2, seat: '12B', boardingGate: 'B3', fullName: 'Ana Sofía Jiménez', email: 'ana.jimenez@estudiantec.cr', baggageCount: 2, baggageSurcharge: 50 },
+      ]
+    });
+  },
 };
 
 const real = {
@@ -193,6 +257,22 @@ const real = {
   },
   remove: async (flightNumber: string): Promise<void> => {
     await api.delete(`/flights/${flightNumber}`);
+  },
+  openFlight: async (flightNumber: string): Promise<any> => {
+    const res = await api.put(`/flight-opening/${flightNumber}/open`);
+    return res.data;
+  },
+  closeFlight: async (flightNumber: string): Promise<any> => {
+    const res = await api.put(`/flight-closing/${flightNumber}/close`);
+    return res.data;
+  },
+  getManifest: async (flightNumber: string): Promise<any> => {
+    const res = await api.get(`/flight-opening/${flightNumber}/manifest`);
+    return res.data;
+  },
+  getFinalList: async (flightNumber: string): Promise<any> => {
+    const res = await api.get(`/flight-closing/${flightNumber}/final-list`);
+    return res.data;
   },
 };
 

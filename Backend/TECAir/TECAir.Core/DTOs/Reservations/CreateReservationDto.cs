@@ -26,5 +26,11 @@ namespace TECAir.Core.DTOs.Reservations
         [Required(AllowEmptyStrings = false, ErrorMessage = "The flight number identifier code is strictly required to hold a booking space.")]
         [StringLength(20, MinimumLength = 2, ErrorMessage = "Flight numbers must be between 2 and 20 characters length.")]
         public string FlightNumber { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the number of seats to reserve.
+        /// </summary>
+        [Range(1, 10, ErrorMessage = "The seat count must be between 1 and 10.")]
+        public int SeatCount { get; set; } = 1;
     }
 }

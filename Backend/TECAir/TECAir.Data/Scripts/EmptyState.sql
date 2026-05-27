@@ -126,6 +126,7 @@ CREATE TABLE reservations (
                                   CHECK (payment_state IN ('Pending', 'Paid', 'Failed', 'Refunded')),
     user_id          INT         NOT NULL,
     flight_number    VARCHAR(20) NOT NULL,
+    seat_count       INT         NOT NULL DEFAULT 1 CHECK (seat_count > 0),
 
     CONSTRAINT fk_reservation_user
         FOREIGN KEY (user_id)
@@ -146,7 +147,7 @@ CREATE TABLE check_ins (
     seat            VARCHAR(10) NOT NULL,
     boarding_gate   VARCHAR(10) NOT NULL,
     print_time      TIMESTAMP   NOT NULL DEFAULT NOW(),
-    reservation_code VARCHAR(30) NOT NULL UNIQUE,
+    reservation_code VARCHAR(30) NOT NULL,
     flight_number   VARCHAR(20) NOT NULL,
 
     CONSTRAINT fk_checkin_reservation
@@ -160,8 +161,8 @@ CREATE TABLE check_ins (
         ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-COMMENT ON TABLE  check_ins                   IS 'Boarding passes generated when checking in for a reservation.';
-COMMENT ON COLUMN check_ins.reservation_code IS 'UNIQUE enforces the 1:1 relationship with reservations.';
+COMMENT ON TABLE  check_ins                  IS 'Boarding passes generated when checking in for a reservation.';
+COMMENT ON COLUMN check_ins.reservation_code IS 'Links the check-in to its respective reservation.';
 
 -- TABLE: baggages
 CREATE TABLE baggages (

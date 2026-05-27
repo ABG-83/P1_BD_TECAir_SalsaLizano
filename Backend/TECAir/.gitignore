@@ -485,6 +485,6 @@ $RECYCLE.BIN/
 **/appsettings.json
 **/appsettings.Development.json
 
-# Ensure appsetting.Example get uploaded
+# Ensure appsettings.Example get uploaded
 **/appsettings.Example.json
 !**/appsettings.Example.json

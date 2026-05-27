@@ -39,7 +39,7 @@ export default function ReservationsScreen() {
   };
 
   const renderItem = ({ item }: { item: Reservation }) => {
-    const isPending = item.status === 'pending_sync';
+    const isPending = item.status === 'pending' || item.status === 'pending_sync';
     
     return (
       <View style={styles.card}>
