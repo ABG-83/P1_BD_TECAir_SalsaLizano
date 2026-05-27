@@ -148,7 +148,7 @@ const mock = {
 
   openFlight: (flightNumber: string): Promise<any> => {
     const f = mockDb.flights.find(fl => fl.flightNumber === flightNumber);
-    if (f) f.estado = 'abierto';
+    if (f) f.estado = 'Boarding';
     return delay({
       flightNumber,
       status: 'Boarding',
@@ -165,7 +165,7 @@ const mock = {
 
   closeFlight: (flightNumber: string): Promise<any> => {
     const f = mockDb.flights.find(fl => fl.flightNumber === flightNumber);
-    if (f) f.estado = 'cerrado';
+    if (f) f.estado = 'InAir';
     return delay({
       flightNumber,
       status: 'InAir',

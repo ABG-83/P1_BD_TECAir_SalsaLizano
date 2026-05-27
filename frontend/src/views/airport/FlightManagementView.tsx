@@ -75,6 +75,24 @@ interface FlightClosingData {
   passengers: CheckedInPassenger[];
 }
 
+interface PassengerManifest {
+  reservationCode: string;
+  fullName: string;
+  email: string;
+  baggageCount: number;
+  baggageSurcharge: number;
+}
+
+interface FlightOpeningData {
+  flightNumber: string;
+  status: string;
+  departureTime: string;
+  arrivalTime: string;
+  totalPassengers: number;
+  totalBaggages: number;
+  passengers: PassengerManifest[];
+}
+
 // ─── Componente ─────────────────────────────────────────────────────────────
 
 const FlightManagementView = () => {
@@ -101,6 +119,15 @@ const FlightManagementView = () => {
   const [confirmingClose, setConfirmingClose] = useState(false);
   const [closeError, setCloseError] = useState('');
   const [closeSuccess, setCloseSuccess] = useState(false);
+
+  // Estado del modal de APERTURA DE VUELO
+  const [showOpenModal, setShowOpenModal] = useState(false);
+  const [openingFlight, setOpeningFlight] = useState<Flight | null>(null);
+  const [manifestList, setManifestList] = useState<FlightOpeningData | null>(null);
+  const [loadingManifest, setLoadingManifest] = useState(false);
+  const [confirmingOpen, setConfirmingOpen] = useState(false);
+  const [openError, setOpenError] = useState('');
+  const [openSuccess, setOpenSuccess] = useState(false);
 
   useEffect(() => {
     void getAllFlights();
@@ -158,6 +185,55 @@ const FlightManagementView = () => {
           ? Number(e.target.value)
           : e.target.value,
       }));
+
+  // ── APERTURA DE VUELO ───────────────────────────────────────────────────
+
+  const openOpenModal = useCallback(async (flight: Flight) => {
+    setOpeningFlight(flight);
+    setShowOpenModal(true);
+    setManifestList(null);
+    setOpenError('');
+    setOpenSuccess(false);
+    setLoadingManifest(true);
+    try {
+      const data = await flightService.getManifest(
+        flight.flightNumber ?? String(flight.num_Vuelo)
+      );
+      setManifestList(data as FlightOpeningData);
+    } catch {
+      setOpenError('No se pudo cargar el manifiesto de pasajeros. Verifique que el vuelo esté programado.');
+    } finally {
+      setLoadingManifest(false);
+    }
+  }, []);
+
+  const handleOpenFlight = async () => {
+    if (!openingFlight) return;
+    setConfirmingOpen(true);
+    setOpenError('');
+    try {
+      const data = await flightService.openFlight(
+        openingFlight.flightNumber ?? String(openingFlight.num_Vuelo)
+      );
+      setManifestList(data as FlightOpeningData);
+      setOpenSuccess(true);
+      await getAllFlights();
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      setOpenError(msg ?? 'No se pudo abrir el vuelo. Intente nuevamente.');
+    } finally {
+      setConfirmingOpen(false);
+    }
+  };
+
+  const handleOpenModalDismiss = () => {
+    setShowOpenModal(false);
+    setOpeningFlight(null);
+    setManifestList(null);
+    setOpenError('');
+    setOpenSuccess(false);
+  };
 
   // ── CIERRE DE VUELO ─────────────────────────────────────────────────────
 
@@ -255,6 +331,7 @@ const FlightManagementView = () => {
             <tbody>
               {flights.map(f => {
                 const flightNumber = f.flightNumber ?? String(f.num_Vuelo);
+                const isScheduled = f.estado === 'Scheduled';
                 const isBoarding = f.estado === 'Boarding';
                 const canClose = isBoarding && withinOneHour(f.hora_Salida);
 
@@ -281,6 +358,18 @@ const FlightManagementView = () => {
                     </td>
                     <td>
                       <div className="d-flex gap-2 flex-wrap">
+                        {/* Botón Abrir Vuelo — solo aparece en estado Scheduled */}
+                        {isScheduled && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => openOpenModal(f)}
+                            title="Abrir vuelo y mostrar manifiesto de pasajeros"
+                          >
+                            <i className="bi bi-door-open me-1" />
+                            Abrir Vuelo
+                          </Button>
+                        )}
                         {/* Botón Cerrar Vuelo — solo aparece en estado Boarding */}
                         {isBoarding && (
                           <Button
@@ -321,6 +410,149 @@ const FlightManagementView = () => {
           </Table>
         </div>
       )}
+
+      {/* ════════════════════════════════════════════════════════════════════
+          MODAL — APERTURA DE VUELO
+          Muestra el manifiesto de vuelo y permite abrir el vuelo.
+          ════════════════════════════════════════════════════════════════════ */}
+      <Modal
+        show={showOpenModal}
+        onHide={handleOpenModalDismiss}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton className={openSuccess ? 'bg-success bg-opacity-10' : ''}>
+          <Modal.Title className="fw-bold">
+            {openSuccess
+              ? '✓ Vuelo abierto exitosamente'
+              : `Apertura de Vuelo — ${openingFlight?.flightNumber ?? ''}`}
+          </Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          {openError && (
+            <Alert variant="danger" className="mb-3">
+              <i className="bi bi-exclamation-triangle me-2" />
+              {openError}
+            </Alert>
+          )}
+
+          {openSuccess && (
+            <Alert variant="success" className="mb-3">
+              <i className="bi bi-check-circle me-2" />
+              El vuelo <strong>{openingFlight?.flightNumber}</strong> ha sido abierto.
+              El manifiesto de pasajeros está disponible a continuación.
+            </Alert>
+          )}
+
+          {loadingManifest && (
+            <div className="text-center py-4">
+              <Spinner animation="border" />
+              <p className="text-muted mt-2 mb-0">Cargando manifiesto de pasajeros...</p>
+            </div>
+          )}
+
+          {manifestList && !loadingManifest && (
+            <>
+              <Row className="g-3 mb-4">
+                <Col xs={6} md={3}>
+                  <Card className="border-0 bg-light text-center py-2">
+                    <div className="fs-4 fw-bold text-dark">{manifestList.totalPassengers}</div>
+                    <div className="small text-muted">Pasajeros</div>
+                  </Card>
+                </Col>
+                <Col xs={6} md={3}>
+                  <Card className="border-0 bg-light text-center py-2">
+                    <div className="fs-4 fw-bold text-dark">{manifestList.totalBaggages}</div>
+                    <div className="small text-muted">Maletas</div>
+                  </Card>
+                </Col>
+                <Col xs={6} md={3}>
+                  <Card className="border-0 bg-light text-center py-2">
+                    <div className="fs-6 fw-bold text-dark">
+                      {new Date(manifestList.departureTime).toLocaleTimeString('es-CR', {
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                    <div className="small text-muted">Salida</div>
+                  </Card>
+                </Col>
+                <Col xs={6} md={3}>
+                  <Card className="border-0 bg-light text-center py-2">
+                    <div className="fs-6 fw-bold text-dark">
+                      {new Date(manifestList.arrivalTime).toLocaleTimeString('es-CR', {
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                    <div className="small text-muted">Llegada</div>
+                  </Card>
+                </Col>
+              </Row>
+
+              <h6 className="fw-bold mb-2">Manifiesto de pasajeros</h6>
+              <p className="text-muted small mb-3">
+                {openSuccess
+                  ? 'Este es el manifiesto definitivo de pasajeros con reservación.'
+                  : 'Lista de pasajeros que cuentan con reservación para este vuelo.'}
+              </p>
+
+              {manifestList.passengers.length === 0 ? (
+                <Alert variant="info">
+                  <i className="bi bi-info-circle me-2" />
+                  No hay pasajeros registrados para este vuelo.
+                </Alert>
+              ) : (
+                <div className="table-responsive">
+                  <Table size="sm" bordered hover className="mb-0">
+                    <thead className="table-dark">
+                      <tr>
+                        <th>Código Reserva</th>
+                        <th>Pasajero</th>
+                        <th className="text-center">Maletas</th>
+                        <th className="text-end">Cargo extra</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {manifestList.passengers.map(p => (
+                        <tr key={p.reservationCode}>
+                          <td>{p.reservationCode}</td>
+                          <td>
+                            <div className="fw-medium">{p.fullName}</div>
+                            <div className="text-muted small">{p.email}</div>
+                          </td>
+                          <td className="text-center">{p.baggageCount}</td>
+                          <td className="text-end">
+                            {p.baggageSurcharge > 0
+                              ? <span className="text-warning fw-medium">${p.baggageSurcharge}</span>
+                              : <span className="text-success">Gratis</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </div>
+              )}
+            </>
+          )}
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={handleOpenModalDismiss}>
+            {openSuccess ? 'Cerrar' : 'Cancelar'}
+          </Button>
+          {!openSuccess && (
+            <Button
+              variant="success"
+              disabled={loadingManifest || confirmingOpen || !!openError}
+              onClick={handleOpenFlight}
+            >
+              {confirmingOpen
+                ? <><Spinner size="sm" animation="border" className="me-2" />Abriendo...</>
+                : <><i className="bi bi-door-open me-2" />Confirmar Apertura</>}
+            </Button>
+          )}
+        </Modal.Footer>
+      </Modal>
 
       {/* ════════════════════════════════════════════════════════════════════
           MODAL — CIERRE DE VUELO
