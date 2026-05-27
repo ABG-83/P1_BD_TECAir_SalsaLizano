@@ -55,6 +55,11 @@ namespace TECAir.Data.Models
         public string FlightNumber { get; set; } = string.Empty;
 
         /// <summary>
+        /// Gets or sets the number of seats reserved.
+        /// </summary>
+        public int SeatCount { get; set; }
+
+        /// <summary>
         /// Gets or sets the full name of the user (populated via JOIN, not stored in reservations table).
         /// </summary>
         public string? UserName { get; set; }
