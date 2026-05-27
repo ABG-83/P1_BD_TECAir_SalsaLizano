@@ -84,7 +84,8 @@ namespace TECAir.Core.Services
                 Date = DateTime.UtcNow,
                 PaymentState = PaymentStatus.Pending,
                 UserId = dto.UserId,
-                FlightNumber = dto.FlightNumber
+                FlightNumber = dto.FlightNumber,
+                SeatCount = 1
             };
 
             string code = await _reservationRepository.CreateAsync(reservation);
